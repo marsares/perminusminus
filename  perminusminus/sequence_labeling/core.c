@@ -9,7 +9,7 @@ const int MAX_SEQUENCE_LENGTH=10000;
 const int MAX_VECTOR_LENGTH=1024;
 const int DECIMAL_PLACES=1000;//decimal places 
 
-int sequence[MAX_SEQUENCE_LENGTH][MAX_VECTOR_LENGTH];
+int sequence[MAX_SEQUENCE_LENGTH*MAX_VECTOR_LENGTH];
 int tags[MAX_SEQUENCE_LENGTH];
 
 int t_size=0;
@@ -100,35 +100,50 @@ void load_model(char* filename){
     }
 }
 
-int load_sequence(char* filename,void(*callback)(int)){
-    FILE * pFile;
-    char mystring [MAX_LINE_LENGTH];
-    pFile=fopen(filename,"r");
-    int seq_len=0;
-    while(fgets (mystring ,MAX_LINE_LENGTH, pFile)){
-        //puts (mystring);
-        char * pEnd=mystring;
-        if(((*pEnd)=='\n')||((*pEnd)=='\r')){//end of a sequence
-            if(seq_len){
-                callback(seq_len);//call back
-                seq_len=0;
+
+struct Sequence_Generator{
+    FILE *input_file;
+    char mystring[MAX_LINE_LENGTH];
+    int* sequence;
+    Sequence_Generator(char* filename,int*sequence){
+        this->input_file=fopen(filename,"r");
+        this->sequence=sequence;
+    };
+    int gen_sequence(){
+        int seq_len=0;
+        while(fgets (this->mystring ,MAX_LINE_LENGTH,this->input_file)){
+            char* pEnd=mystring;
+            if(((*pEnd)=='\n')||((*pEnd)=='\r')){//end of a sequence
+                if(seq_len)
+                    return seq_len;
+                continue;
             }
-            continue;
+            int vid=0;
+            tags[seq_len]=strtol(pEnd,&pEnd,10);
+            while(((*pEnd)!='\n')&&((*pEnd)!='\r')){
+                this->sequence[seq_len*MAX_VECTOR_LENGTH+vid]=strtol(pEnd,&pEnd,10);
+                vid++;
+            }
+            this->sequence[seq_len*MAX_VECTOR_LENGTH+vid]=-1;
+            seq_len++;
         }
-        int vid=0;
-        tags[seq_len]=strtol(pEnd,&pEnd,10);
-        while(((*pEnd)!='\n')&&((*pEnd)!='\r')){
-            sequence[seq_len][vid]=strtol(pEnd,&pEnd,10);
-            vid++;
+        if(seq_len){
+            return seq_len;
         }
-        sequence[seq_len][vid]=-1;
-        seq_len++;
+        fclose (this->input_file);
+        return 0;
+    };
+};
+
+void load_sequence(char* filename,void(*callback)(int)){
+    Sequence_Generator sg=Sequence_Generator(filename,sequence);
+    int seq_len=0;
+    while(seq_len=sg.gen_sequence()){
+        callback(seq_len);
     }
-    if(seq_len)callback(seq_len);//call back
-    fclose (pFile);
-    return 0;
 }
 
+ 
 /*count t_size, f_size*/
 void count_size(int seq_len){
     s_size++;
@@ -136,11 +151,12 @@ void count_size(int seq_len){
         if(t_size<tags[i])
             t_size=tags[i];
         int vid=0;
-        while(sequence[i][vid]>=0){
-            if(f_size<sequence[i][vid])
-                f_size=sequence[i][vid];
+        while(sequence[i*MAX_VECTOR_LENGTH+vid]>=0){
+            if(f_size<sequence[i*MAX_VECTOR_LENGTH+vid])
+                f_size=sequence[i*MAX_VECTOR_LENGTH+vid];
             vid++;
         }
+        //printf("%d\n",sequence[i*MAX_VECTOR_LENGTH+vid]);
     }
 }
 
@@ -159,7 +175,7 @@ void decode(int seq_len){
         int vid=0;
         memset(values[i],0,t_size*sizeof(int));
         memset(pointers[i],0,t_size*sizeof(int));
-        while((fid=sequence[i][vid])>=0){
+        while((fid=sequence[i*MAX_VECTOR_LENGTH+vid])>=0){
             for(int j=0;j<t_size;j++)
                 values[i][j]+=features[fid*t_size+j];
             vid++;
@@ -178,7 +194,7 @@ void decode2(int seq_len){
         memset(values[i],0,t_size*sizeof(int));
         memset(alphas[i],0,t_size*sizeof(int));
         memset(betas[i],0,t_size*sizeof(int));
-        while((fid=sequence[i][vid])>=0){
+        while((fid=sequence[i*MAX_VECTOR_LENGTH+vid])>=0){
             for(int j=0;j<t_size;j++)
                 values[i][j]+=features[fid*t_size+j];
             vid++;
@@ -200,7 +216,7 @@ void n_best_decode(int seq_len){
             pointers[i][j]=-1;
         for(int j=0;j<t_size;j++)
             pointers[i][j*n_best]=0;
-        while((fid=sequence[i][vid])>=0){
+        while((fid=sequence[i*MAX_VECTOR_LENGTH+vid])>=0){
             for(int j=0;j<t_size;j++)
                 values[i][j*n_best]+=features[fid*t_size+j];
             vid++;
@@ -220,7 +236,7 @@ void update(int seq_len){
             continue;
         }
         vid=0;
-        while((fid=sequence[i][vid])>=0){
+        while((fid=sequence[i*MAX_VECTOR_LENGTH+vid])>=0){
             features[fid*t_size+output[i]]--;
             features[fid*t_size+tags[i]]++;
             ave_features[fid*t_size+output[i]]-=ave_weight;

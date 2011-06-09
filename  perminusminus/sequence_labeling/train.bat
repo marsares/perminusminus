@@ -1,2 +1,2 @@
-a.exe l train.txt 10 model.bin
-a.exe p model.bin test.txt result.txt -2
+per--.exe l train.txt 10 model.bin
+per--.exe p model.bin test.txt result.txt -3

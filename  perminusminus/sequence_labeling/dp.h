@@ -1,9 +1,6 @@
 #ifndef DY_PRO
 #define DY_PRO
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-
 
 struct candidate{int value;int pointer;};
 
