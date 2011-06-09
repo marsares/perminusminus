@@ -80,24 +80,7 @@ void load_model(char* filename){
     fread(trans_features,t_size*t_size,sizeof(int),pFile);
     fread(features,f_size*t_size,sizeof(int),pFile);
     fclose (pFile);
-    if(config.output_type<=1){
-        for(int i=0;i<MAX_SEQUENCE_LENGTH;i++){
-            values[i]=new int[t_size];
-            pointers[i]=new int[t_size];
-            alphas[i]=new int[t_size];
-            betas[i]=new int[t_size];
-        }
-    }else{
-        n_best=config.output_type;
-        n_best_candidates=new candidate[t_size*n_best];
-        for(int i=0;i<MAX_SEQUENCE_LENGTH;i++){
-            values[i]=new int[t_size*n_best];
-            pointers[i]=new int[t_size*n_best];
-        }
-        n_best_outputs=new int*[n_best];
-        for(int i=0;i<n_best;i++)
-            n_best_outputs[i]=new int[MAX_SEQUENCE_LENGTH];
-    }
+    
 }
 
 
@@ -111,6 +94,7 @@ struct Sequence_Generator{
     };
     int gen_sequence(){
         int seq_len=0;
+        int seq_ind=0;
         while(fgets (this->mystring ,MAX_LINE_LENGTH,this->input_file)){
             char* pEnd=mystring;
             if(((*pEnd)=='\n')||((*pEnd)=='\r')){//end of a sequence
@@ -118,13 +102,11 @@ struct Sequence_Generator{
                     return seq_len;
                 continue;
             }
-            int vid=0;
             tags[seq_len]=strtol(pEnd,&pEnd,10);
             while(((*pEnd)!='\n')&&((*pEnd)!='\r')){
-                this->sequence[seq_len*MAX_VECTOR_LENGTH+vid]=strtol(pEnd,&pEnd,10);
-                vid++;
+                this->sequence[seq_ind++]=strtol(pEnd,&pEnd,10);
             }
-            this->sequence[seq_len*MAX_VECTOR_LENGTH+vid]=-1;
+            this->sequence[seq_ind++]=-1;
             seq_len++;
         }
         if(seq_len){
@@ -147,16 +129,14 @@ void load_sequence(char* filename,void(*callback)(int)){
 /*count t_size, f_size*/
 void count_size(int seq_len){
     s_size++;
+    int seq_ind=0;
+    int f_id=0;
     for(int i=0;i<seq_len;i++){
-        if(t_size<tags[i])
-            t_size=tags[i];
-        int vid=0;
-        while(sequence[i*MAX_VECTOR_LENGTH+vid]>=0){
-            if(f_size<sequence[i*MAX_VECTOR_LENGTH+vid])
-                f_size=sequence[i*MAX_VECTOR_LENGTH+vid];
-            vid++;
+        if(t_size<tags[i]+1)
+            t_size=tags[i]+1;
+        while((f_id=sequence[seq_ind++])>=0){
+            if(f_size<f_id+1)f_size=f_id+1;
         }
-        //printf("%d\n",sequence[i*MAX_VECTOR_LENGTH+vid]);
     }
 }
 
@@ -167,20 +147,23 @@ inline void refresh_counts(int seq_len){
         if(tags[i]==output[i])
             correct_token_count++;
 }
+inline void put_values(int seq_len){
+    int fid=0;
+    int seq_ind=0;
+    for(int i=0;i<seq_len;i++){
+        memset(values[i],0,t_size*sizeof(int));
+        while((fid=sequence[seq_ind++])>=0){
+            for(int j=0;j<t_size;j++)
+                values[i][j]+=features[fid*t_size+j];
+        }
+    }
+}
 
 void decode(int seq_len){
     //add values
-    int fid=0;
-    for(int i=0;i<seq_len;i++){
-        int vid=0;
-        memset(values[i],0,t_size*sizeof(int));
+    for(int i=0;i<seq_len;i++)
         memset(pointers[i],0,t_size*sizeof(int));
-        while((fid=sequence[i*MAX_VECTOR_LENGTH+vid])>=0){
-            for(int j=0;j<t_size;j++)
-                values[i][j]+=features[fid*t_size+j];
-            vid++;
-        }
-    }
+    put_values(seq_len);
     dp_decode(seq_len,t_size,trans_features,output,values,pointers);
     refresh_counts(seq_len);
 }
@@ -188,40 +171,23 @@ void decode(int seq_len){
 /*this is forwards and backwords*/
 void decode2(int seq_len){
     //add values
-    int fid=0;
     for(int i=0;i<seq_len;i++){
-        int vid=0;
-        memset(values[i],0,t_size*sizeof(int));
         memset(alphas[i],0,t_size*sizeof(int));
         memset(betas[i],0,t_size*sizeof(int));
-        while((fid=sequence[i*MAX_VECTOR_LENGTH+vid])>=0){
-            for(int j=0;j<t_size;j++)
-                values[i][j]+=features[fid*t_size+j];
-            vid++;
-        }
     }
+    put_values(seq_len);
     dp_decode2(seq_len,t_size,trans_features,output,values,alphas,betas);
     refresh_counts(seq_len);
 }
 
 
 void n_best_decode(int seq_len){
-    
     //add values
-    int fid=0;
     for(int i=0;i<seq_len;i++){
-        int vid=0;
-        memset(values[i],0,t_size*n_best*sizeof(int));
-        for(int j=0;j<t_size*n_best;j++)
-            pointers[i][j]=-1;
-        for(int j=0;j<t_size;j++)
-            pointers[i][j*n_best]=0;
-        while((fid=sequence[i*MAX_VECTOR_LENGTH+vid])>=0){
-            for(int j=0;j<t_size;j++)
-                values[i][j*n_best]+=features[fid*t_size+j];
-            vid++;
-        }
+        for(int j=0;j<t_size*n_best;j++)pointers[i][j]=-1;
+        for(int j=0;j<t_size;j++)pointers[i][j*n_best]=0;
     }
+    put_values(seq_len);
     dp_n_best_decode(seq_len,t_size,trans_features,output,values,pointers
               ,n_best,n_best_candidates,n_best_outputs);
     refresh_counts(seq_len);
@@ -229,20 +195,20 @@ void n_best_decode(int seq_len){
 
 
 void update(int seq_len){
-    int vid=0;
     int fid=0;
+    int seq_ind=0;
     for(int i=0;i<seq_len;i++){
         if(tags[i]==output[i]){
+            while((fid=sequence[seq_ind++])>=0){}
             continue;
         }
-        vid=0;
-        while((fid=sequence[i*MAX_VECTOR_LENGTH+vid])>=0){
+        while((fid=sequence[seq_ind++])>=0){
+            //printf("update %d %d\n",i,fid);
             features[fid*t_size+output[i]]--;
             features[fid*t_size+tags[i]]++;
             ave_features[fid*t_size+output[i]]-=ave_weight;
             ave_features[fid*t_size+tags[i]]+=ave_weight;
-            vid++;
-        }    
+        }
     }
     for(int i=0;i<seq_len-1;i++){
         if((tags[i]==output[i])&&(tags[i+1]==output[i+1]))continue;
@@ -257,7 +223,6 @@ void update(int seq_len){
 
 void learn_seq(int seq_len){
     decode(seq_len);
-    
     update(seq_len);
 }
 
@@ -265,7 +230,7 @@ void train(char* trainingfilename,char*modelfilename,int N=10){
     //initilize
     t_size=0;f_size=0;s_size=0;
     load_sequence(trainingfilename,&count_size);
-    t_size++;f_size++;ave_weight=N*s_size;
+    ave_weight=N*s_size;
     printf("labels: %d\r\n",t_size);
     printf("features: %d\r\n",f_size);
     printf("training set size: %d\r\n",s_size);
@@ -344,6 +309,24 @@ void test_seq(int seq_len){
 }
 void test(char*modelfilename,char*src,char*dst){
     load_model(modelfilename);
+    if(config.output_type<=0){
+        for(int i=0;i<MAX_SEQUENCE_LENGTH;i++){
+            values[i]=new int[t_size];
+            pointers[i]=new int[t_size];
+            alphas[i]=new int[t_size];
+            betas[i]=new int[t_size];
+        }
+    }else{
+        n_best=config.output_type;
+        n_best_candidates=new candidate[t_size*n_best];
+        for(int i=0;i<MAX_SEQUENCE_LENGTH;i++){
+            values[i]=new int[t_size*n_best];
+            pointers[i]=new int[t_size*n_best];
+        }
+        n_best_outputs=new int*[n_best];
+        for(int i=0;i<n_best;i++)
+            n_best_outputs[i]=new int[MAX_SEQUENCE_LENGTH];
+    }
     token_count=0;
     correct_token_count=0;
     output_file = fopen ( dst , "w" );
@@ -353,12 +336,6 @@ void test(char*modelfilename,char*src,char*dst){
 }
 
 int main(int argc,char* args[]){
-    //for test of the code
-    //train("test.txt","model.bin",5);
-    //train("train.txt","model.bin",20);
-    //test("model.bin","test.txt","result.txt");
-    
-    
     if(argc==1){
         printf("usage\n");
         printf("learn:\n");

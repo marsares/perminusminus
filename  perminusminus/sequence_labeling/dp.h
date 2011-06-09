@@ -1,6 +1,9 @@
 #ifndef DY_PRO
 #define DY_PRO
+//#include <stdio.h>
 #include <stdlib.h>
+//#include <string.h>
+
 
 struct candidate{int value;int pointer;};
 
@@ -131,6 +134,7 @@ void dp_n_best_decode(int seq_len
             }
         }
     }
+    
     ind=0;
     for(int j=0;j<t_size*n_best;j++){
         if(pointers[seq_len-1][j]<0)continue;
@@ -154,9 +158,12 @@ void dp_n_best_decode(int seq_len
     
     for(;rank<n_best;rank++)
         n_best_outputs[rank][0]=-1;
-
-    for(int i=0;i<seq_len;i++)
+    //printf("lala %d lala\n",seq_len);
+    //printf("%d \n",n_best_outputs[0][0]);
+    for(int i=0;i<seq_len;i++){
         output[i]=n_best_outputs[0][i];
+    }
+    //printf("haha\n");
 }
 
 
