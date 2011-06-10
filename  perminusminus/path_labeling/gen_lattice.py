@@ -1,3 +1,9 @@
+import json
+'''
+format of the json file
+graph::= node *
+node ::= [type,[pre],[post],label,[feature]]
+'''
 def gen_lex():
     s=set()
     for line in open('msr_training.utf8',encoding='utf8'):
@@ -32,7 +38,7 @@ class WID(dict):
 
 if __name__=='__main__':
     file=open('toy.txt','w',encoding='utf8')
-    
+    json_file=open('toy.json','w',encoding='utf8')
     lex=gen_lex()
     print('lex loaded')
     wid=WID()
@@ -48,9 +54,15 @@ if __name__=='__main__':
         for i in range(len(seq)):
             for j in range(i+1,min(len(seq)+1,i+1+4)):
                 if seq[i:j] in lex:
+                    left=seq[i-1] if i>0 else '#'
+                    left2=seq[i-2] if i-1>0 else '#'
+                    right=seq[j] if j<len(seq) else '#'
+                    right2=seq[j+1] if j+1<len(seq) else '#'
+                    features=[seq[i:j],'l1'+left,'r1'+right,
+                            'l12'+left2+left,'r12'+right+right2]
                     node=[
                         [len(nodes),i,j,[],[]],
-                          [(i,j) in arcs,[seq[i:j]]]
+                          [(i,j) in arcs,features]
                           ]
                     nodes.append(node)
                     start[i].append(node)
@@ -79,12 +91,17 @@ if __name__=='__main__':
                 node[1][0]=-1
             node[1][1]=[wid(x)for x in node[1][1]]
         
-            
+        
+        graph_json=[]
         for node in nodes:
             #print(node[0]+node[1])
+            node_json=[node[0][0],[x for x in node[0][1] if x<0],[x for x in node[0][1] if x>0]
+                    ,node[1][0],node[1][1]]
+            graph_json.append(node_json)
+            
             l=' '.join((str(node[0][0]),' '.join(str(x)for x in node[0][1])
                      ,' '.join(str(x) for x in node[0][2]),'|'
                      ,str(node[1][0]),' '.join(str(x)for x in node[1][1])))
             print(l,file=file)
         print('',file=file)
-        
+        print(json.dumps(graph_json),file=json_file)
