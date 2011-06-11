@@ -1,6 +1,9 @@
 #ifndef __GRAPH_FILE_H__
 #define __GRAPH_FILE_H__
-#include "dp.h"
+#include<stdio.h>
+#include<stdlib.h>
+#include"dp.h"
+
 /*
 format for each graph
 remaining_int_length node_count

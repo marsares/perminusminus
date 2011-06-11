@@ -1,4 +1,7 @@
 import json
+import array
+
+debugg=0
 
 class Model:
     l_size=0
@@ -52,7 +55,7 @@ def update(model,graph,labels):
                 model.ll_weights[l_cache][labels[i]]-=1
             l_cache=labels[i]
     return correct
-def decode(model,graph):
+def decode(model,graph,debugg=0):
     values=[[0 for j in range(model.l_size)]for i in range(len(graph))]
     alphas=[[[0,-1] for j in range(model.l_size)]for i in range(len(graph))]
     labels=[-1 for i in range(len(graph))]
@@ -63,7 +66,7 @@ def decode(model,graph):
             for j in range(model.l_size):
                 pass
                 values[i][j]+=model.fl_weights[f_id][j]
-            
+    
     #find best
     best_score=[0,-1]
     for i in range(len(graph)):
@@ -84,24 +87,45 @@ def decode(model,graph):
                         tmp=[score,p,k]
             tmp[0]+=values[i][j]
             alphas[i][j]=tmp
+            if debugg:
+                print(i,j,*alphas[i][j])
             if node[0]>1:#end of a graph
                 if best_score[1]==-1 or alphas[i][j][0]>best_score[0]:
                     best_score=[alphas[i][j][0],i,j]
                 
     #find path
-    
+    if debugg:
+        '''
+        print("xxx")
+        for x in values:
+            print(x);
+        print(*labels)
+        input()'''
+        #print(*best_score)
+        #input()
+        pass
     while True:
         #print(best_score)
         if best_score[1]==-1:break
         labels[best_score[1]]=best_score[2]
         best_score=alphas[best_score[1]][best_score[2]]
+    if debugg:
+        #print(*labels)
+        #input()
+        pass
     return labels
 
-def learning(model,graphs):
+def learning(model,graphs,debugg):
     total,correct=0,0
     for graph in graphs:
-        labels=decode(model,graph)#find the best path and lebels
+        labels=decode(model,graph,debugg)#find the best path and lebels
         total+=len(graph)
+        #print(*labels)
+        #print(*[x[3]for x in graph])
+        #input()
+        if debugg:
+            correct+=sum(1 for a,b in zip([x[3]for x in graph],labels) if a==b)
+            continue
         correct+=update(model,graph,labels)#update according to the gold standard
     print(total,correct,correct/total)
 
@@ -115,12 +139,28 @@ def train():
         for y in range(model.f_size)]
     model.ll_weights=[[0 for x in range(model.l_size)]
         for y in range(model.l_size)]
-    
+    debugg=1
     #begin learning
-    for i in range(2):
+    for i in range(10):
         print(i)
-        learning(model,gen_graph('toy.txt'))
+        learning(model,gen_graph('toy.txt'),0)
+        
+    debugg=1
+    learning(model,gen_graph('toy.txt'),1)
+    return model
 
+
+def save(model):
+    arr=array.array("i");
+    arr.append(model.l_size);
+    arr.append(model.f_size);
+    for x in model.ll_weights:
+        arr.extend(x)
+    for x in model.fl_weights:
+        arr.extend(x)
+    arr.tofile(open("model.bin",'wb'))
 
 if __name__=='__main__':
-    train()
+    model=train()
+    #save(model)
+    
