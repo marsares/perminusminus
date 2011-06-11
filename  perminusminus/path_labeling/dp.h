@@ -2,17 +2,17 @@
 #define __DP_H__
 #include<stdlib.h>
 
+//topological information about a node
+struct Node{
+    int type;//initial? terminal?
+    int* predecessors;//ends with a -1
+    int* successors;//ends with a -1
+};
 //a structure for alphas and betas
 struct Alpha_Beta{
     int value;
     int label_id;
     int node_id;
-};
-
-struct Node{//topological information about a node
-    int type;//initial? terminal?
-    int* predecessors;//ends with a -1
-    int* successors;//ends with a -1
 };
 
 /* The DP algorithm(s) for path labeling */
