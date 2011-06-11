@@ -95,8 +95,10 @@ if __name__=='__main__':
         graph_json=[]
         for node in nodes:
             #print(node[0]+node[1])
-            node_json=[node[0][0],[x for x in node[0][1] if x<0],[x for x in node[0][1] if x>0]
+            node_json=[node[0][0],node[0][1]
+                       ,node[0][2]
                     ,node[1][0],node[1][1]]
+            
             graph_json.append(node_json)
             
             l=' '.join((str(node[0][0]),' '.join(str(x)for x in node[0][1])

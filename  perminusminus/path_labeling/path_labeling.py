@@ -89,6 +89,7 @@ def decode(model,graph):
                     best_score=[alphas[i][j][0],i,j]
                 
     #find path
+    
     while True:
         #print(best_score)
         if best_score[1]==-1:break
