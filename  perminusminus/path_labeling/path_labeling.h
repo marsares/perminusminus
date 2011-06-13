@@ -122,7 +122,7 @@ struct PERMM{
                 this->eval_strandard_label++;
             if(this->result[i]>=0)
                 this->eval_result_label++;
-            if((graph->labels[i]>=0)&&(this->result[i]>=0))
+            if((graph->labels[i]>=0)&&(this->result[i]==graph->labels[i]))
                 this->eval_correct_label++;
         }
         return;

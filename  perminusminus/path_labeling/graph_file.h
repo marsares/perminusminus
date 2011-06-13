@@ -5,11 +5,18 @@
 #include"dp.h"
 
 /*
-format for each graph
+binary file format for each graph
 remaining_int_length node_count
-(node type)+ (predecessors -1)+ (successors -1)+ (label)+ (features -1)+
+(node type)+ (predecessors -1)+ (label)+ (features -1)+
 */
-
+/*
+Text file format for each graph
+node_count
+(node type)+
+(predecessors -1)+
+(label)+
+(features -1)+
+*/
 
 struct Graph{
     int node_count;
@@ -58,10 +65,10 @@ struct Graph_Loader{
             graph->nodes[i].predecessors=p;
             while((*(p++))>=0);
         }
-        for(int i=0;i<graph->node_count;i++){
+        /*for(int i=0;i<graph->node_count;i++){
             graph->nodes[i].successors=p;
             while((*(p++))>=0);
-        }
+        }*/
         graph->labels=p;
         graph->features=p+node_count;
         

@@ -2,7 +2,7 @@ import json
 '''
 format of the json file
 graph::= node *
-node ::= [type,[pre],[post],label,[feature]]
+node ::= [type,[pre],label,[feature]]
 '''
 def gen_lex():
     s=set()
@@ -71,8 +71,8 @@ if __name__=='__main__':
         for node in nodes:
             i=node[0][1]
             j=node[0][2]
-            node[0][3]=[n[0][0]-node[0][0] for n in end[i]]
-            node[0][4]=[n[0][0]-node[0][0] for n in start[j]]
+            node[0][3]=[n[0][0] for n in end[i]]
+            node[0][4]=[n[0][0] for n in start[j]]
         
         
         for node in nodes:
@@ -96,7 +96,7 @@ if __name__=='__main__':
         for node in nodes:
             #print(node[0]+node[1])
             node_json=[node[0][0],node[0][1]
-                       ,node[0][2]
+                       #,node[0][2]
                     ,node[1][0],node[1][1]]
             
             graph_json.append(node_json)
