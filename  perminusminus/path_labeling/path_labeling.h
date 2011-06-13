@@ -11,11 +11,13 @@ struct PERMM{
     Alpha_Beta* alphas;
     int* result;
     Model* model;
-    int node_count;
-    int correct_node;
+    int steps;
+    int eval_strandard_label;
+    int eval_correct_label;
+    int eval_result_label;
     PERMM(Model* model,int length=10){
-        this->node_count=0;
-        this->correct_node=0;
+        this->eval_reset();
+        this->steps=0;
         this->length=length;
         this->model=model;
         this->values=(int*)calloc(4,length*this->model->l_size);
@@ -56,22 +58,26 @@ struct PERMM{
         //}
     };
     void update(Graph* graph){
+        this->steps++;
         int fid=0;
         int*p=graph->features;
         int l_size=this->model->l_size;
-        this->node_count+=graph->node_count;
-        //this->correct_node+=graph->node_count;
         for(int i=0;i<graph->node_count;i++){
             if(graph->labels[i]==this->result[i]){
-                this->correct_node++;
-                //while((*(p++))>=0);
-                //continue;
+                while((*(p++))>=0);
+                continue;
             }
             while((fid=*(p++))>=0){
-                if(graph->labels[i]>=0)
+                if(graph->labels[i]>=0){
                     this->model->fl_weights[fid*l_size+graph->labels[i]]++;
-                if(this->result[i]>=0)
+                    this->model->ave_fl_weights[fid*l_size+graph->labels[i]]+=
+                        this->steps;
+                }
+                if(this->result[i]>=0){
                     this->model->fl_weights[fid*l_size+this->result[i]]--;
+                    this->model->ave_fl_weights[fid*l_size+this->result[i]]-=
+                        this->steps;
+                }
             };
         }
         
@@ -79,18 +85,49 @@ struct PERMM{
         int pre_result=-1;
         for(int i=0;i<graph->node_count;i++){
             if(graph->labels[i]>=0){
-                if(pre_label>=0)
+                if(pre_label>=0){
                     this->model->ll_weights[pre_label*l_size+graph->labels[i]]++;
+                    this->model->ave_ll_weights[pre_label*l_size+graph->labels[i]]+=
+                        this->steps;
+                }
                 pre_label=graph->labels[i];
             }
             if(this->result[i]>=0){
-                if(pre_result>=0)
+                if(pre_result>=0){
                     this->model->ll_weights[pre_result*l_size+this->result[i]]--;
+                    this->model->ave_ll_weights[pre_result*l_size+this->result[i]]-=
+                        this->steps;
+                }
                 pre_result=this->result[i];
             }
         }
+        
     }
-    void decode(Graph* graph){
+    void eval_reset(){
+        this->eval_strandard_label=0;
+        this->eval_correct_label=0;
+        this->eval_result_label=0;
+    }
+    void eval_print(){
+        printf("std: %d rst: %d cor:%d\n",this->eval_strandard_label,this->eval_result_label,
+               this->eval_correct_label);
+        double p=(double)(this->eval_correct_label)/(this->eval_result_label);
+        double r=(double)(this->eval_correct_label)/(this->eval_strandard_label);
+        double f=2*p*r/(p+r);
+        printf("p: %f r: %f f1: %f\n",p,r,f);
+    }
+    void eval(Graph*& graph){
+        for(int i=0;i<graph->node_count;i++){
+            if(graph->labels[i]>=0)
+                this->eval_strandard_label++;
+            if(this->result[i]>=0)
+                this->eval_result_label++;
+            if((graph->labels[i]>=0)&&(this->result[i]>=0))
+                this->eval_correct_label++;
+        }
+        return;
+    }
+    void decode(Graph*& graph){
         this->add_values(graph);
         
         dp_decode(
@@ -102,18 +139,7 @@ struct PERMM{
             this->alphas,
             this->result
         );
-        //update(graph);
-        /*
-        for(int i=0;i<graph->node_count;i++){
-            printf("%d ",graph->nodes[i].type);
-        }printf("\n");
-        for(int i=0;i<graph->node_count;i++){
-            printf("%d ",graph->labels[i]);
-        }printf("\n");
-        for(int i=0;i<graph->node_count;i++){
-            printf("%d ",this->result[i]);
-        }printf("\n");*/
-        
+        this->eval(graph);
         
     }
 };
