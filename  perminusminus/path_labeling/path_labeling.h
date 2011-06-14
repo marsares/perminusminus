@@ -10,21 +10,23 @@ struct PERMM{
     int* values;
     Alpha_Beta* alphas;
     Alpha_Beta* betas;
+    int n_best;
     int* result;
     Model* model;
     int steps;
     int eval_strandard_label;
     int eval_correct_label;
     int eval_result_label;
-    PERMM(Model* model,int length=10){
+    PERMM(Model* model,int n_best=10){
         this->eval_reset();
         this->steps=0;
-        this->length=length;
+        this->length=10;
+        this->n_best=n_best;
         this->model=model;
         this->values=(int*)calloc(4,length*this->model->l_size);
         this->result=(int*)calloc(4,length*this->model->l_size);
-        this->alphas=(Alpha_Beta*)calloc(sizeof(Alpha_Beta),length*this->model->l_size);
-        this->betas=(Alpha_Beta*)calloc(sizeof(Alpha_Beta),length*this->model->l_size);
+        this->alphas=(Alpha_Beta*)calloc(sizeof(Alpha_Beta),n_best*length*this->model->l_size);
+        this->betas=(Alpha_Beta*)calloc(sizeof(Alpha_Beta),n_best*length*this->model->l_size);
         
     }
     void add_values(Graph* graph){
@@ -37,19 +39,13 @@ struct PERMM{
             //printf("%d\n",node_count);
             this->values=(int*)realloc(this->values,4*this->length*this->model->l_size);
             this->result=(int*)realloc(this->result,4*this->length*this->model->l_size);
-            this->alphas=(Alpha_Beta*)realloc(this->alphas,sizeof(Alpha_Beta)*length*this->model->l_size);
-            this->betas=(Alpha_Beta*)realloc(this->betas,sizeof(Alpha_Beta)*length*this->model->l_size);
+            this->alphas=(Alpha_Beta*)realloc(this->alphas,n_best*sizeof(Alpha_Beta)*length*this->model->l_size);
+            this->betas=(Alpha_Beta*)realloc(this->betas,n_best*sizeof(Alpha_Beta)*length*this->model->l_size);
             
         }
         for(int i=0;i<this->length*this->model->l_size;i++){
             this->values[i]=0;
             this->result[i]=-1;
-            this->alphas[i].value=0;
-            this->alphas[i].node_id=-2;
-            this->alphas[i].label_id=0;
-            this->betas[i].value=0;
-            this->betas[i].node_id=-2;
-            this->betas[i].label_id=0;
         }
         for(int i=0;i<graph->node_count;i++){
             while((fid=*(p++))>=0){
@@ -144,6 +140,31 @@ struct PERMM{
             this->values,
             this->alphas,
             this->result
+        );/*
+        dp_nb_decode(
+            this->model->l_size,
+            this->model->ll_weights,
+            graph->node_count,
+            graph->nodes,
+            this->values,
+            this->n_best,
+            this->alphas,
+            this->result
+        );*/
+        this->eval(graph);
+    }
+    void nb_decode(Graph*& graph){
+        this->add_values(graph);
+        
+        dp_nb_decode(
+            this->model->l_size,
+            this->model->ll_weights,
+            graph->node_count,
+            graph->nodes,
+            this->values,
+            this->n_best,
+            this->alphas,
+            this->result
         );
         this->eval(graph);
     }
@@ -158,19 +179,6 @@ struct PERMM{
             this->betas
         );
         free(buffer);
-        /*
-        int l_size=this->model->l_size;
-        for(int i=0;i<graph->node_count;i++){
-            printf("(%d) ",result[i]);
-            for(int j=0;j<l_size;j++){
-                
-                printf("(%d) ",
-                       //alphas[i*l_size+j].value,
-                       //betas[i*l_size+j].value,
-                       alphas[i*l_size+j].value+betas[i*l_size+j].value-values[i*l_size+j]);
-            }printf("\n");
-        }printf("\n");*/
-        
     }
 };
 

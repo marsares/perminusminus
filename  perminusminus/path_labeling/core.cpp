@@ -31,7 +31,7 @@ void count_size(Graph_Loader& gl,int&l_size,int&f_size,int&g_size){
 
 void test(char* modelfile="model.bin",char*testfile="toy.bin",char*resultfile="result.txt"){
     Model* model=new Model(modelfile);
-    PERMM permm(model);
+    PERMM permm(model,3);
     Graph_Loader* gl;
     FILE* pFile=fopen(resultfile,"w");
     Graph* graph=NULL;
@@ -41,7 +41,9 @@ void test(char* modelfile="model.bin",char*testfile="toy.bin",char*resultfile="r
     printf("begin\n");
     while(gl->load(graph)){
         
-        permm.decode(graph);
+        //permm.decode(graph);
+        permm.nb_decode(graph);
+        
         //permm.cal_betas(graph);//cal betas, so you can output them
         for(int i=0;i<graph->node_count;i++){
             fprintf(pFile,"%d %d\n",graph->labels[i],permm.result[i]);
@@ -97,6 +99,30 @@ int main(){
     //train("training.bin","model.bin",5);
     test("model.bin","test.bin","result.txt");
     
+    /*
+    Alpha_Beta list[10];
+    for(int i=0;i<10;i++){
+        printf("%d\n",list[i].value);
+    }printf("\n");
+    int ms=4;
+    int count=0;
+    Alpha_Beta a={1,0,0};
+    nb_heap_insert(list,ms,count,a);
+    
+    nb_heap_insert(list,ms,count,a);
+    a.value=3;
+    nb_heap_insert(list,ms,count,a);
+    
+    nb_heap_insert(list,ms,count,a);
+    
+    nb_heap_insert(list,ms,count,a);
+    
+    nb_heap_insert(list,ms,count,a);
+    
+    for(int i=0;i<10;i++){
+        printf("%d\n",list[i].value);
+    }*/
     return 0;
 
 }
+
