@@ -5,15 +5,16 @@
 #include"path_labeling.h"
 
 
-void count_size(Graph_Loader& gl,int&l_size,int&f_size){
+void count_size(Graph_Loader& gl,int&l_size,int&f_size,int&g_size){
     Graph* graph;
     l_size=0;
     f_size=0;
+    g_size=0;
     int nc=0;
     int* pfid;
     int fid;
     while(gl.load(graph)){
-        //printf("%d\n",graph->node_count);
+        g_size++;
         nc=graph->node_count;
         pfid=graph->features;
         for(int i=0;i<nc;i++){
@@ -23,6 +24,7 @@ void count_size(Graph_Loader& gl,int&l_size,int&f_size){
                 if(f_size<fid)f_size=fid;
             }
         }
+        //delete graph;
     }
     l_size++;f_size++;
 };
@@ -32,12 +34,15 @@ void test(char* modelfile="model.bin",char*testfile="toy.bin",char*resultfile="r
     PERMM permm(model);
     Graph_Loader* gl;
     FILE* pFile=fopen(resultfile,"w");
-    Graph* graph;
+    Graph* graph=NULL;
     
     permm.eval_reset();
     gl=new Graph_Loader(testfile);
+    printf("begin\n");
     while(gl->load(graph)){
+        
         permm.decode(graph);
+        //permm.cal_betas(graph);//cal betas, so you can output them
         for(int i=0;i<graph->node_count;i++){
             fprintf(pFile,"%d %d\n",graph->labels[i],permm.result[i]);
         };
@@ -50,21 +55,23 @@ void train(char* trainingfile="toy.bin",char* modelfile="model.bin",int iteratio
     Graph_Loader* gl=new Graph_Loader(trainingfile);
     int l_size;
     int f_size;
-    count_size(*gl,l_size,f_size);
+    int g_size;
+    count_size(*gl,l_size,f_size,g_size);
     printf("l_size: %d\n",l_size);
     printf("f_size: %d\n",f_size);
     Model* model=new Model(l_size,f_size);
     
     PERMM permm(model);
     
-    Graph* graph;
+    Graph* graph=NULL;
     for(int t=0;t<iterations;t++){
         printf("iter %d\n",(t+1));
         permm.eval_reset();
-        delete gl;
-        gl=new Graph_Loader(trainingfile);
+        //gl=new Graph_Loader(trainingfile);
         while(gl->load(graph)){
+            
             permm.decode(graph);
+            
             /*for(int i=0;i<graph->node_count;i++){
                 printf("%d ",permm.result[i]);
             }printf("\n");
@@ -73,7 +80,7 @@ void train(char* trainingfile="toy.bin",char* modelfile="model.bin",int iteratio
             }printf("\n");*/
             //getchar();
             permm.update(graph);
-            delete graph;
+            //delete graph;
         }
         permm.eval_print();
 
@@ -87,7 +94,7 @@ int main(){
     //train();
     //test();
     
-    //train("training.bin","model.bin",20);
+    //train("training.bin","model.bin",5);
     test("model.bin","test.bin","result.txt");
     
     return 0;

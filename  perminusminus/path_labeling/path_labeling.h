@@ -9,6 +9,7 @@ struct PERMM{
     int length;
     int* values;
     Alpha_Beta* alphas;
+    Alpha_Beta* betas;
     int* result;
     Model* model;
     int steps;
@@ -23,6 +24,7 @@ struct PERMM{
         this->values=(int*)calloc(4,length*this->model->l_size);
         this->result=(int*)calloc(4,length*this->model->l_size);
         this->alphas=(Alpha_Beta*)calloc(sizeof(Alpha_Beta),length*this->model->l_size);
+        this->betas=(Alpha_Beta*)calloc(sizeof(Alpha_Beta),length*this->model->l_size);
         
     }
     void add_values(Graph* graph){
@@ -36,6 +38,7 @@ struct PERMM{
             this->values=(int*)realloc(this->values,4*this->length*this->model->l_size);
             this->result=(int*)realloc(this->result,4*this->length*this->model->l_size);
             this->alphas=(Alpha_Beta*)realloc(this->alphas,sizeof(Alpha_Beta)*length*this->model->l_size);
+            this->betas=(Alpha_Beta*)realloc(this->betas,sizeof(Alpha_Beta)*length*this->model->l_size);
             
         }
         for(int i=0;i<this->length*this->model->l_size;i++){
@@ -44,6 +47,9 @@ struct PERMM{
             this->alphas[i].value=0;
             this->alphas[i].node_id=-2;
             this->alphas[i].label_id=0;
+            this->betas[i].value=0;
+            this->betas[i].node_id=-2;
+            this->betas[i].label_id=0;
         }
         for(int i=0;i<graph->node_count;i++){
             while((fid=*(p++))>=0){
@@ -140,6 +146,30 @@ struct PERMM{
             this->result
         );
         this->eval(graph);
+    }
+    void cal_betas(Graph*& graph){
+        int*buffer=dp_cal_successors(graph->node_count,graph->nodes);
+        dp_cal_betas(
+            this->model->l_size,
+            this->model->ll_weights,
+            graph->node_count,
+            graph->nodes,
+            this->values,
+            this->betas
+        );
+        free(buffer);
+        /*
+        int l_size=this->model->l_size;
+        for(int i=0;i<graph->node_count;i++){
+            printf("(%d) ",result[i]);
+            for(int j=0;j<l_size;j++){
+                
+                printf("(%d) ",
+                       //alphas[i*l_size+j].value,
+                       //betas[i*l_size+j].value,
+                       alphas[i*l_size+j].value+betas[i*l_size+j].value-values[i*l_size+j]);
+            }printf("\n");
+        }printf("\n");*/
         
     }
 };
