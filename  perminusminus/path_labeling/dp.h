@@ -57,7 +57,7 @@ struct Alpha_Beta{
     
 };
 int alpha_beta_comp(const void* a,const void* b){
-    return ((Alpha_Beta*)a)->value-((Alpha_Beta*)b)->value;
+    return ((Alpha_Beta*)b)->value-((Alpha_Beta*)a)->value;
 }
 /*
 the n-best heap for the n-best searching
@@ -158,8 +158,8 @@ inline void dp_decode(
         }
     }
     //find the path and label the nodes of it.
-    for(node_id=0;node_id<node_count;node_id++)
-        result[node_id]=-1;
+    //for(node_id=0;node_id<node_count;node_id++)
+    //    result[node_id]=-1;
     tmp=&best;
     while(tmp->node_id>=0){
         result[tmp->node_id]=tmp->label_id;
@@ -277,13 +277,15 @@ inline void dp_nb_decode(
     qsort(best,nb,sizeof(Alpha_Beta),alpha_beta_comp);
     //find the path and label the nodes of it.
     
-    for(node_id=0;node_id<node_count;node_id++)
-        result[node_id]=-1;
-    Alpha_Beta* tmp=&best[nb-1];
-    while(tmp->node_id>=0){
-        //printf("%d %d %d\n",tmp->value,tmp->node_id,tmp->label_id);
-        result[tmp->node_id]=(tmp->label_id)/nb;
-        tmp=&(alphas[(tmp->node_id)*l_size*nb+(tmp->label_id)]);
+    //for(node_id=0;node_id<node_count;node_id++)
+    //    result[node_id]=-1;
+    
+    for(int n=0;n<nb;n++){
+        Alpha_Beta* tmp=&best[n];
+        while(tmp->node_id>=0){
+            result[n*node_count+tmp->node_id]=(tmp->label_id)/nb;
+            tmp=&(alphas[(tmp->node_id)*l_size*nb+(tmp->label_id)]);
+        }
     }
     return;
 };

@@ -29,60 +29,101 @@ void count_size(Graph_Loader& gl,int&l_size,int&f_size,int&g_size){
     l_size++;f_size++;
 };
 
-void test(char* modelfile="model.bin",char*testfile="toy.bin",char*resultfile="result.txt"){
+
+
+void test(char* modelfile,char*testfile,char*resultfile,int decode_type){
     Model* model=new Model(modelfile);
-    PERMM permm(model,3);
+    printf("model loaded\n");
+    PERMM permm(model,(decode_type>0?decode_type:1));
     Graph_Loader* gl;
     FILE* pFile=fopen(resultfile,"w");
     Graph* graph=NULL;
     
     permm.eval_reset();
     gl=new Graph_Loader(testfile);
-    printf("begin\n");
     while(gl->load(graph)){
+        //decode
+        if(decode_type>0){
+            permm.nb_decode(graph);
+        }else{
+            permm.decode(graph);
+            if(decode_type<0)permm.cal_betas(graph);
+        }
+        //output
+        if(decode_type>0){
+            for(int i=0;i<graph->node_count;i++){
+                fprintf(pFile,"%d",graph->labels[i]);
+                for(int n=0;n<decode_type;n++){
+                    fprintf(pFile," %d",permm.result[n*graph->node_count+i]);
+                }
+                fprintf(pFile,"\n");
+            };
+            
+        }
+        if(decode_type==0){//basic output
+            for(int i=0;i<graph->node_count;i++){
+                fprintf(pFile,"%d %d\n",graph->labels[i],permm.result[i]);
+            };
+        }
+        if(decode_type==-1){//marginal score
+            for(int i=0;i<graph->node_count;i++){
+                fprintf(pFile,"%d %d",graph->labels[i],permm.result[i]);
+                for(int j=0;j<model->l_size;j++){
+                    fprintf(pFile," %g",
+                            (double)(permm.alphas[i*model->l_size+j].value
+                            -permm.values[i*model->l_size+j]
+                            +permm.betas[i*model->l_size+j].value)/DEC
+                            );
+                }
+                fprintf(pFile,"\n");
+            };
+        }
+        if(decode_type==-2){//alpha value beta
+            for(int i=0;i<graph->node_count;i++){
+                fprintf(pFile,"%d %d",graph->labels[i],permm.result[i]);
+                for(int j=0;j<model->l_size;j++){
+                    fprintf(pFile," %g/%g/%g",
+                            (double)(permm.alphas[i*model->l_size+j].value)/DEC,
+                            (double)(permm.values[i*model->l_size+j])/DEC,
+                            (double)(permm.betas[i*model->l_size+j].value)/DEC
+                            );
+                }
+                fprintf(pFile,"\n");
+            };
+        }
         
-        //permm.decode(graph);
-        permm.nb_decode(graph);
+        fprintf(pFile,"\n");//don't forget the newline for each graph
         
-        //permm.cal_betas(graph);//cal betas, so you can output them
-        for(int i=0;i<graph->node_count;i++){
-            fprintf(pFile,"%d %d\n",graph->labels[i],permm.result[i]);
-        };
-        fprintf(pFile,"\n");
     }
+    
     permm.eval_print();
-    fclose(pFile);
+    //fclose(pFile);
+    
 }
-void train(char* trainingfile="toy.bin",char* modelfile="model.bin",int iterations=10){
+
+
+struct Training_Config{
+    
+};
+
+void train(char* trainingfile,char* modelfile,int iterations){
     Graph_Loader* gl=new Graph_Loader(trainingfile);
-    int l_size;
-    int f_size;
-    int g_size;
+    int l_size;int f_size;int g_size;
     count_size(*gl,l_size,f_size,g_size);
-    printf("l_size: %d\n",l_size);
-    printf("f_size: %d\n",f_size);
+    printf("model initialized\n");
+    printf("number of labels: %d\n",l_size);
+    printf("number of features: %d\n",f_size);
     Model* model=new Model(l_size,f_size);
     
     PERMM permm(model);
     
     Graph* graph=NULL;
     for(int t=0;t<iterations;t++){
-        printf("iter %d\n",(t+1));
+        printf("iteration %d\n",(t+1));
         permm.eval_reset();
-        //gl=new Graph_Loader(trainingfile);
         while(gl->load(graph)){
-            
             permm.decode(graph);
-            
-            /*for(int i=0;i<graph->node_count;i++){
-                printf("%d ",permm.result[i]);
-            }printf("\n");
-            for(int i=0;i<graph->node_count;i++){
-                printf("%d ",graph->labels[i]);
-            }printf("\n");*/
-            //getchar();
             permm.update(graph);
-            //delete graph;
         }
         permm.eval_print();
 
@@ -91,37 +132,34 @@ void train(char* trainingfile="toy.bin",char* modelfile="model.bin",int iteratio
     model->average(permm.steps);
     model->save(modelfile);
 }
-int main(){
-    
-    //train();
-    //test();
-    
+int main(int argc, char *argv[]){
+    //only for development
     //train("training.bin","model.bin",5);
-    test("model.bin","test.bin","result.txt");
+    //test("model.bin","test.bin","result.txt",1);
+    //end of development code
     
-    /*
-    Alpha_Beta list[10];
-    for(int i=0;i<10;i++){
-        printf("%d\n",list[i].value);
-    }printf("\n");
-    int ms=4;
-    int count=0;
-    Alpha_Beta a={1,0,0};
-    nb_heap_insert(list,ms,count,a);
     
-    nb_heap_insert(list,ms,count,a);
-    a.value=3;
-    nb_heap_insert(list,ms,count,a);
+    if(argc==1){
+        //print some instructuion
+        printf("per-- toolkit\n");
+        printf("author: ZHANG Kaixu\n");
+        printf("see http://code.google.com/p/perminusminus/ for more info.\n");
+        return 0;
+    }
     
-    nb_heap_insert(list,ms,count,a);
+    char* strend;
+    if(argv[1][0]=='l'){
+        train(argv[2],
+                argv[3],
+                strtol(argv[4],&strend,10));
+    }else if(argv[1][0]=='p'){
+        test(argv[2],
+             argv[3],
+             argv[4],
+             strtol(argv[5],&strend,10));
+        
+    }
     
-    nb_heap_insert(list,ms,count,a);
-    
-    nb_heap_insert(list,ms,count,a);
-    
-    for(int i=0;i<10;i++){
-        printf("%d\n",list[i].value);
-    }*/
     return 0;
 
 }

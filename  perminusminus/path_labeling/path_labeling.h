@@ -17,14 +17,14 @@ struct PERMM{
     int eval_strandard_label;
     int eval_correct_label;
     int eval_result_label;
-    PERMM(Model* model,int n_best=10){
+    PERMM(Model* model,int n_best=1){
         this->eval_reset();
         this->steps=0;
         this->length=10;
         this->n_best=n_best;
         this->model=model;
         this->values=(int*)calloc(4,length*this->model->l_size);
-        this->result=(int*)calloc(4,length*this->model->l_size);
+        this->result=(int*)calloc(4,n_best*length*this->model->l_size);
         this->alphas=(Alpha_Beta*)calloc(sizeof(Alpha_Beta),n_best*length*this->model->l_size);
         this->betas=(Alpha_Beta*)calloc(sizeof(Alpha_Beta),n_best*length*this->model->l_size);
         
@@ -36,15 +36,16 @@ struct PERMM{
         int node_count=graph->node_count;
         while(node_count>this->length){//need to extends
             (this->length)*=2;
-            //printf("%d\n",node_count);
             this->values=(int*)realloc(this->values,4*this->length*this->model->l_size);
-            this->result=(int*)realloc(this->result,4*this->length*this->model->l_size);
+            this->result=(int*)realloc(this->result,n_best*4*this->length*this->model->l_size);
             this->alphas=(Alpha_Beta*)realloc(this->alphas,n_best*sizeof(Alpha_Beta)*length*this->model->l_size);
             this->betas=(Alpha_Beta*)realloc(this->betas,n_best*sizeof(Alpha_Beta)*length*this->model->l_size);
             
         }
-        for(int i=0;i<this->length*this->model->l_size;i++){
+        for(int i=0;i<node_count*this->model->l_size;i++){
             this->values[i]=0;
+        }
+        for(int i=0;i<n_best*node_count*this->model->l_size;i++){
             this->result[i]=-1;
         }
         for(int i=0;i<graph->node_count;i++){
@@ -116,7 +117,7 @@ struct PERMM{
         double p=(double)(this->eval_correct_label)/(this->eval_result_label);
         double r=(double)(this->eval_correct_label)/(this->eval_strandard_label);
         double f=2*p*r/(p+r);
-        printf("p: %f r: %f f1: %f\n",p,r,f);
+        printf("precesion: %f recall: %f f1: %f\n",p,r,f);
     }
     void eval(Graph*& graph){
         for(int i=0;i<graph->node_count;i++){
@@ -140,17 +141,8 @@ struct PERMM{
             this->values,
             this->alphas,
             this->result
-        );/*
-        dp_nb_decode(
-            this->model->l_size,
-            this->model->ll_weights,
-            graph->node_count,
-            graph->nodes,
-            this->values,
-            this->n_best,
-            this->alphas,
-            this->result
-        );*/
+        );
+
         this->eval(graph);
     }
     void nb_decode(Graph*& graph){

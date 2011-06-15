@@ -60,7 +60,7 @@ struct Model{
         
         fwrite(&(this->l_size),4,1,pFile);
         fwrite(&(this->f_size),4,1,pFile);
-        printf("%d %d\n",l_size,f_size);
+        //printf("%d %d\n",l_size,f_size);
         fwrite((this->ll_weights),4,l_size*l_size,pFile);
         fwrite((this->fl_weights),4,l_size*f_size,pFile);
         fclose(pFile);
