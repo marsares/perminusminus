@@ -31,9 +31,9 @@ def gen_keys(seq,i):
     left2=seq[i-2] if i-1>0 else '#'
     right=seq[i+1] if i+1<len(seq) else '#'
     right2=seq[i+2] if i+2<len(seq) else '#'
-    return [mid,'l:'+left,'r:'+right,
-            'l:'+left+mid,'r:'+mid+right,
-            'l2:'+left2+left,'r2:'+right+right2]
+    return [mid+":m",left+":l",right+":r",
+            left+mid+':L',mid+right+':R',
+            left2+left+':2L',right+right2+':2R']
 
 def train(src,dst,index):
     fid=FeatureIndexer()
