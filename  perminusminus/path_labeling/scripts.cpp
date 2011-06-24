@@ -1,8 +1,8 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include "graph_file.h"
-#include "core.h"
-#include"path_labeling.h"
+
+#include "model.h"
+#include"workbench.h"
 
 
 void count_size(Graph_Loader& gl,int&l_size,int&f_size,int&g_size){
@@ -102,9 +102,7 @@ void test(char* modelfile,char*testfile,char*resultfile,int decode_type){
 }
 
 
-struct Training_Config{
-    
-};
+
 
 void train(char* trainingfile,char* modelfile,int iterations){
     Graph_Loader* gl=new Graph_Loader(trainingfile);

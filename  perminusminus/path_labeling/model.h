@@ -1,8 +1,7 @@
 #ifndef __CORE_H__
 #define __CORE_H__
-#include "dp.h"
 #include<stdio.h>
-#include "graph_file.h"
+
 /*the structure of the model, also the file of the model*/
 const int DEC=1000;
 struct Model{

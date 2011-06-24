@@ -1,8 +1,9 @@
 #ifndef __PATH_LABELING_H__
 #define __PATH_LABELING_H__
 #include<stdlib.h>
-#include "core.h"
-#include"dp.h"
+#include "model.h"
+#include"decoder.h"
+#include"graph.h"
 
 
 struct PERMM{

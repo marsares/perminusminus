@@ -2,7 +2,7 @@
 #define __GRAPH_FILE_H__
 #include<stdio.h>
 #include<stdlib.h>
-#include"dp.h"
+#include"decoder.h"
 
 /*
 binary file format for each graph
