@@ -55,6 +55,7 @@ struct Graph_Loader{
         }
     };
     void load_graph(int data_size,Graph* &graph){
+        
         int* buffer=(int*)malloc(data_size*4);
         fread(buffer,4,data_size,pFile);
         int* p=buffer;
@@ -103,8 +104,10 @@ struct Graph_Loader{
                 return 1;
             }
         }
+        
         delete graph;
         int data_size;
+        //printf("check\n");
         if(!fread(&data_size,sizeof(int),1,this->pFile)){
             graph=NULL;
             fseek(pFile,0,SEEK_SET);

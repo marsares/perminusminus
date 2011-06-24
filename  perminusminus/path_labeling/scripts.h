@@ -1,3 +1,6 @@
+#ifndef __SCRIPTS_H__
+#define __SCRIPTS_H__
+
 #include<stdio.h>
 #include<stdlib.h>
 
@@ -5,8 +8,13 @@
 #include"workbench.h"
 
 
+void train(char* trainingfile,char* modelfile,int iterations);
+void test(char* modelfile,char*testfile,char*resultfile,int decode_type);
+
+
+
 void count_size(Graph_Loader& gl,int&l_size,int&f_size,int&g_size){
-    Graph* graph;
+    Graph* graph=NULL;
     l_size=0;
     f_size=0;
     g_size=0;
@@ -14,6 +22,7 @@ void count_size(Graph_Loader& gl,int&l_size,int&f_size,int&g_size){
     int* pfid;
     int fid;
     while(gl.load(graph)){
+        
         g_size++;
         nc=graph->node_count;
         pfid=graph->features;
@@ -105,7 +114,9 @@ void test(char* modelfile,char*testfile,char*resultfile,int decode_type){
 
 
 void train(char* trainingfile,char* modelfile,int iterations){
+    
     Graph_Loader* gl=new Graph_Loader(trainingfile);
+    
     int l_size;int f_size;int g_size;
     count_size(*gl,l_size,f_size,g_size);
     printf("model initialized\n");
@@ -130,35 +141,6 @@ void train(char* trainingfile,char* modelfile,int iterations){
     model->average(permm.steps);
     model->save(modelfile);
 }
-int main(int argc, char *argv[]){
-    //only for development
-    //train("training.bin","model.bin",5);
-    //test("model.bin","test.bin","result.txt",1);
-    //end of development code
-    
-    
-    if(argc==1){
-        //print some instructuion
-        printf("per-- toolkit\n");
-        printf("author: ZHANG Kaixu\n");
-        printf("see http://code.google.com/p/perminusminus/ for more info.\n");
-        return 0;
-    }
-    
-    char* strend;
-    if(argv[1][0]=='l'){
-        train(argv[2],
-                argv[3],
-                strtol(argv[4],&strend,10));
-    }else if(argv[1][0]=='p'){
-        test(argv[2],
-             argv[3],
-             argv[4],
-             strtol(argv[5],&strend,10));
-        
-    }
-    
-    return 0;
 
-}
+#endif
 
