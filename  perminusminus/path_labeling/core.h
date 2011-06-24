@@ -28,12 +28,33 @@ struct Model{
         int l_size=this->l_size;
         int f_size=this->f_size;
         for(int i=0;i<l_size*f_size;i++){
-            this->fl_weights[i]=(int)(((double)((this->fl_weights[i])*step-
-                    (this->ave_fl_weights[i]))/step+0.5)*DEC);
+            this->fl_weights[i]=(int)
+                    (
+                     (
+                        (((double)(this->fl_weights[i]))*step-
+                        (this->ave_fl_weights[i]))
+                            /step
+                        +0.5
+                      )
+                     *DEC
+                     )
+            ;
         }
         for(int i=0;i<l_size*l_size;i++){
-            this->ll_weights[i]=(int)(((double)((this->ll_weights[i])*step-
-                    (this->ave_ll_weights[i]))/step+0.5)*DEC);
+            this->ll_weights[i]=(int)
+                    (
+                        (
+                        (((double)(this->ll_weights[i]))*step-
+                        (this->ave_ll_weights[i]))
+                            /step
+                        +0.5
+                        
+                        )
+                    
+                    *DEC
+                    
+                    )
+            ;
         }
     }
     
