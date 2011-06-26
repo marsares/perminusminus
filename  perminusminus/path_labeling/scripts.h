@@ -135,7 +135,7 @@ void train(char* trainingfile,char* modelfile,int iterations){
             permm.update(graph);
         }
         permm.eval_print();
-
+        printf("steps %d\n",permm.steps);
 
     }
     model->average(permm.steps);

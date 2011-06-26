@@ -30,12 +30,11 @@ struct Model{
             this->fl_weights[i]=(int)
                     (
                      (
-                        (((double)(this->fl_weights[i]))*step-
-                        (this->ave_fl_weights[i]))
-                            /step
-                        +0.5
+                        (double)(this->fl_weights[i])
+                         -
+                        (this->ave_fl_weights[i])/step
                       )
-                     *DEC
+                     *DEC+0.5
                      )
             ;
         }
@@ -43,15 +42,11 @@ struct Model{
             this->ll_weights[i]=(int)
                     (
                         (
-                        (((double)(this->ll_weights[i]))*step-
-                        (this->ave_ll_weights[i]))
-                            /step
-                        +0.5
-                        
+                         (double)(this->ll_weights[i])
+                         -
+                        (this->ave_ll_weights[i])/step   
                         )
-                    
-                    *DEC
-                    
+                    *DEC+0.5
                     )
             ;
         }
