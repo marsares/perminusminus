@@ -9,9 +9,6 @@ def to_set(seq):
             #print((offset,i+1))
             offset=i+1
             
-    if i!=offset:
-        s.add((offset,i))
-    
     return s
 def eval_sen(g,r):
     go=to_set(g)
