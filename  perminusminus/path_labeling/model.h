@@ -49,6 +49,8 @@ struct Model{
                     *DEC+0.5
                     )
             ;
+            //printf("%f\n",this->ave_ll_weights[i]);
+            //printf("%d\n",this->ll_weights[i]);
         }
     }
     

@@ -8,7 +8,8 @@ def to_set(seq):
             s.add((offset,i+1))
             #print((offset,i+1))
             offset=i+1
-            
+    if (i+1)!=offset:
+        s.add((offset,i+1))
     return s
 def eval_sen(g,r):
     go=to_set(g)

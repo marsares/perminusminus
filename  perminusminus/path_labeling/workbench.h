@@ -62,7 +62,7 @@ struct PERMM{
         //}
     };
     void update(Graph* graph){
-        this->steps++;
+        
         int fid=0;
         int*p=graph->features;
         int l_size=this->model->l_size;
@@ -85,26 +85,60 @@ struct PERMM{
             };
         }
         
-        int pre_label=-1;
-        int pre_result=-1;
+        /**big bug!!!*/
+        int*pip;
+        int pi;
+        int ll_ind;
         for(int i=0;i<graph->node_count;i++){
             if(graph->labels[i]>=0){
-                if(pre_label>=0){
-                    this->model->ll_weights[pre_label*l_size+graph->labels[i]]++;
-                    this->model->ave_ll_weights[pre_label*l_size+graph->labels[i]]+=
-                        this->steps;
+                pip=graph->nodes[i].predecessors;
+                pi=0;
+                while((pi=*(pip++))>=0){
+                    if(graph->labels[pi]>=0){
+                        ll_ind=(graph->labels[pi])*l_size+graph->labels[i];
+                        this->model->ll_weights[ll_ind]++;
+                        this->model->ave_ll_weights[ll_ind]+=this->steps;
+                    }
                 }
-                pre_label=graph->labels[i];
-            }
-            if(this->result[i]>=0){
-                if(pre_result>=0){
-                    this->model->ll_weights[pre_result*l_size+this->result[i]]--;
-                    this->model->ave_ll_weights[pre_result*l_size+this->result[i]]-=
-                        this->steps;
-                }
-                pre_result=this->result[i];
             }
         }
+        
+        for(int i=0;i<graph->node_count;i++){
+            if(this->result[i]>=0){
+                pip=graph->nodes[i].predecessors;
+                pi=0;
+                while((pi=*(pip++))>=0){
+                    if(this->result[pi]>=0){
+                        ll_ind=(this->result[pi])*l_size+this->result[i];
+                        this->model->ll_weights[ll_ind]--;
+                        this->model->ave_ll_weights[ll_ind]-=this->steps;
+                    }
+                }
+            }
+        }
+        
+        
+        //int pre_label=-1;
+        //int pre_result=-1;
+        //for(int i=0;i<graph->node_count;i++){
+        //    if(graph->labels[i]>=0){
+        //        if(pre_label>=0){
+        //            this->model->ll_weights[pre_label*l_size+graph->labels[i]]++;
+        //            this->model->ave_ll_weights[pre_label*l_size+graph->labels[i]]+=
+        //                this->steps;
+        //        }
+        //        pre_label=graph->labels[i];
+        //    }
+        //    if(this->result[i]>=0){
+        //        if(pre_result>=0){
+        //            this->model->ll_weights[pre_result*l_size+this->result[i]]--;
+        //            this->model->ave_ll_weights[pre_result*l_size+this->result[i]]-=
+        //                this->steps;
+        //        }
+        //        pre_result=this->result[i];
+        //    }
+        //}
+        this->steps++;
         
     }
     void eval_reset(){
