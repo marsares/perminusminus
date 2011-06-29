@@ -130,12 +130,12 @@ inline void dp_decode(
     for(int i=0;i<node_count;i++){//for each node
         for(int j=0;j<l_size;j++){//for each label
             tmp=&alphas[i*l_size+j];
-            tmp->node_id=-2;//non-reach
+            tmp->node_id=-2;//non reachable
             tmp->value=0;
             p_node_id=nodes[i].predecessors;
             while((node_id=*(p_node_id++))>=0){
                 for(int k=0;k<l_size;k++){
-                    if(alphas[node_id*l_size+k].node_id==-2)continue;
+                    if(alphas[node_id*l_size+k].node_id==-2)continue;//not reachable
                     score=alphas[node_id*l_size+k].value+ll_weights[k*l_size+j];
                     if((tmp->node_id<0)||(score>tmp->value)){
                         tmp->value=score;

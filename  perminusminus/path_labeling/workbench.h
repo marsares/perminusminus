@@ -85,7 +85,6 @@ struct PERMM{
             };
         }
         
-        /**big bug!!!*/
         int*pip;
         int pi;
         int ll_ind;
@@ -117,27 +116,6 @@ struct PERMM{
             }
         }
         
-        
-        //int pre_label=-1;
-        //int pre_result=-1;
-        //for(int i=0;i<graph->node_count;i++){
-        //    if(graph->labels[i]>=0){
-        //        if(pre_label>=0){
-        //            this->model->ll_weights[pre_label*l_size+graph->labels[i]]++;
-        //            this->model->ave_ll_weights[pre_label*l_size+graph->labels[i]]+=
-        //                this->steps;
-        //        }
-        //        pre_label=graph->labels[i];
-        //    }
-        //    if(this->result[i]>=0){
-        //        if(pre_result>=0){
-        //            this->model->ll_weights[pre_result*l_size+this->result[i]]--;
-        //            this->model->ave_ll_weights[pre_result*l_size+this->result[i]]-=
-        //                this->steps;
-        //        }
-        //        pre_result=this->result[i];
-        //    }
-        //}
         this->steps++;
         
     }
