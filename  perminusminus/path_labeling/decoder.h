@@ -237,10 +237,10 @@ inline void dp_nb_decode(
         for(int j=0;j<l_size;j++){//for each label
             p_node_id=nodes[i].predecessors;
             count=0;
-            /*for(int n=0;n<nb;n++){
+            for(int n=0;n<nb;n++){
                 alphas[(i*l_size+j)*nb+n].node_id=-2;
                 alphas[(i*l_size+j)*nb+n].value=0;
-            }*/
+            }
             while((node_id=*(p_node_id++))>=0){
                 for(int k=0;k<l_size;k++){
                     score=values[i*l_size+j]+ll_weights[k*l_size+j];
@@ -248,6 +248,7 @@ inline void dp_nb_decode(
                         if(alphas[(node_id*l_size+k)*nb+n].node_id==-2)continue;
                         Alpha_Beta tmp={score+alphas[(node_id*l_size+k)*nb+n].value,
                                 node_id,k*nb+n};
+                        //printf("add, %d %d %d %d %d\n",i,j,node_id,k,n);
                         nb_heap_insert(alphas+(i*l_size+j)*nb,nb,count,tmp);
                     }
                 }
@@ -258,11 +259,11 @@ inline void dp_nb_decode(
                 nb_heap_insert(alphas+(i*l_size+j)*nb,nb,count,tmp);
             }
             /*
-            printf("(%d, %d)\n",i,j);
+            printf("(position=%d, label=%d)\n",i,j);
             for(int n=0;n<count;n++){
-                printf("%d %d %d\n",alphas[(i*l_size+j)*nb+n].value,
+                printf("value=%d pre_position=%d pre_label=%d\n",alphas[(i*l_size+j)*nb+n].value,
                        alphas[(i*l_size+j)*nb+n].node_id,
-                       alphas[(i*l_size+j)*nb+n].label_id);
+                       alphas[(i*l_size+j)*nb+n].label_id/nb);
             }
             getchar();*/
             if(nodes[i].type>=2){
