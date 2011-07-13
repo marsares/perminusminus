@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import json
 import sys
 import json_to_binary
@@ -89,9 +90,9 @@ def test(index,src,dst):
 if __name__=='__main__':
     if len(sys.argv)==1:#empty argv, do the debug
         print("reading training data")
-        train('msr_training.utf8','training.bin','index.json')
+        #train('msr_training.utf8','training.bin','index.json')
         print("reading test data")
-        test('index.json','msr_test_gold.utf8','test.bin')
+        #test('index.json','msr_test_gold.utf8','test.bin')
         exit()
     
     task=sys.argv[1]

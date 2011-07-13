@@ -61,7 +61,7 @@ struct Model{
         fread(&(this->f_size),4,1,pFile);
         int l_size=this->l_size;
         int f_size=this->f_size;
-        printf("%d %d\n",this->l_size,this->f_size);
+        //printf("%d %d\n",this->l_size,this->f_size);
         this->ll_weights=(int*)malloc(sizeof(int)*l_size*l_size);
         this->fl_weights=(int*)malloc(sizeof(int)*l_size*f_size);
         

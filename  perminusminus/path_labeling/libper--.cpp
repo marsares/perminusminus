@@ -19,7 +19,7 @@ EXPORT void permm_train(char* trainingfile,char* modelfile,int iterations){
 
 EXPORT void permm_init(char* modelfile,int decode_type,void*& pointer){
     Model* model=new Model(modelfile);
-    printf("model loaded\n");
+    //printf("model loaded\n");
     pointer=new PERMM(model,(decode_type>0?decode_type:1));
 };
 EXPORT void permm_debug(void*&permm){
