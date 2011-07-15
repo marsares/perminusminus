@@ -7,7 +7,9 @@
 #include "model.h"
 #include"workbench.h"
 
-
+/**
+three high level scripts
+*/
 void train(char* trainingfile,char* modelfile,int iterations);
 void test(char* modelfile,char*testfile,char*resultfile,int decode_type);
 
