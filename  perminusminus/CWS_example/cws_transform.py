@@ -25,9 +25,9 @@ def gen_keys(seq,i):
     left2=seq[i-2] if i-1>0 else '#'
     right=seq[i+1] if i+1<len(seq) else '#'
     right2=seq[i+2] if i+2<len(seq) else '#'
-    return [mid+":m",left+":l",right+":r",
-            left+mid+':L',mid+right+':R',
-            left2+left+':2L',right+right2+':2R']
+    return [mid+" 1",left+" 2",right+" 3",
+            left+mid+' 1',mid+right+' 2',
+            left2+left+' 3',right+right2+' 4']
 
 def train(src,dst,index):
     inder=indexer.Indexer(index,'w')
@@ -61,9 +61,7 @@ def test(index,src,dst):
         line=line.split()
         seq=''.join(line)
         graph=[]
-
         fs=[filter(lambda x:x>=0,[inder(k) for k in gen_keys(seq,x)]) for x in range(len(seq))]
-
         for c,v in zip(_to_tags(line),fs):
             graph.append([0,[],c,v])
         if not graph:continue
@@ -86,7 +84,7 @@ if __name__=='__main__':
     task=sys.argv[1]
     if task=='l':
         print("reading training data")
-        print((sys.argv[2],sys.argv[3],sys.argv[4]))
+        #print((sys.argv[2],sys.argv[3],sys.argv[4]))
         train(sys.argv[2],sys.argv[3],sys.argv[4])
         exit()
     if task=='p':

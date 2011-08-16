@@ -6,4 +6,4 @@ makeall: libper--.so per--
 libper--.so: libper--.cpp command_line.cpp $(core_headers)
 	g++ -shared -fPIC libper--.cpp -o libper--.so
 per-- : command_line.cpp $(core_headers)
-	g++ -o per-- command_line.cpp
+	g++ -O6 -o per-- command_line.cpp
