@@ -10,6 +10,8 @@ const int max_length=10000;
 
 
 int sequence[max_length];
+int uni_bases[max_length+2];
+int bi_bases[max_length+4];
 Node nodes[max_length];
 
 
@@ -42,26 +44,22 @@ void load_da(char* filename,int* &base_array,int* &check_array,int &size){
     //关闭文件
     fclose (pFile);
 };
-inline int find_uni_base(int*bases,int*checks,int dat_size,int ch1){
+/*
+inline void find_bases(int*bases,int*checks,int dat_size,int ch1,int ch2,int& uni_base,int&bi_base){
     int ind=0;
+    int ind2=0;
     int base=0;
     ind=bases[ind]+ch1;
-    if(ind>=dat_size||checks[ind]!=base)return -1;
-    base=ind;
+    if(ind>=dat_size||checks[ind]!=base){
+        uni_base=-1;bi_base=-1;return;
+    }
+    
     ind=bases[ind]+32;
-    if(ind>=dat_size||checks[ind]!=base)return -1;
     base=ind;
     ind=bases[ind]+49;
     base=ind;
-    return ind;
-}
-
-inline int find_bi_base(int*bases,int*checks,int dat_size,int ch1,int ch2){
-    int ind=0;
-    int base=0;
-    ind=bases[ind]+ch1;
-    if(ind>=dat_size||checks[ind]!=base)return -1;
-    base=ind;
+    
+    
     ind=bases[ind]+ch2;
     if(ind>=dat_size||checks[ind]!=base)return -1;
     base=ind;
@@ -70,6 +68,27 @@ inline int find_bi_base(int*bases,int*checks,int dat_size,int ch1,int ch2){
     base=ind;
     ind=bases[ind]+49;
     base=ind;
+    
+}*/
+
+inline int find_uni_base(int*bases,int*checks,int dat_size,int ch1){
+    int ind=0;
+    ind=bases[ind]+ch1;
+    if(ind>=dat_size||checks[ind])return -1;
+    ind=bases[ind]+32;
+    ind=bases[ind]+49;
+    return ind;
+}
+
+inline int find_bi_base(int*bases,int*checks,int dat_size,int ch1,int ch2){
+    int ind=0;
+    ind=bases[ind]+ch1;
+    if(ind>=dat_size||checks[ind])return -1;
+    int base=ind;
+    ind=bases[ind]+ch2;
+    if(ind>=dat_size||checks[ind]!=base)return -1;
+    ind=bases[ind]+32;
+    ind=bases[ind]+49;
     return ind;
 }
 
@@ -105,112 +124,79 @@ void put_values(){
     nodes[len-1].type+=2;
     //printf("%d\n",len);
     
+    /*uni_bases*/
+    uni_bases[0]=find_uni_base(bases,checks,dat_size,35);
     for(int i=0;i<len;i++){
-        int left=35;
-        if(i>0)left=sequence[i-1];
-        int left2=35;
-        if(i-1>0)left2=sequence[i-2];
-        int right=35;
-        int right2=35;
-        if(i+1<len)right=sequence[i+1];
-        if(i+2<len)right2=sequence[i+2];
-        
-        int base=find_uni_base(bases,checks,dat_size,sequence[i]);
+        uni_bases[i+1]=find_uni_base(bases,checks,dat_size,sequence[i]);
+    }
+    uni_bases[len+1]=find_uni_base(bases,checks,dat_size,35);
+    /*bi_bases*/
+    bi_bases[0]=find_bi_base(bases,checks,dat_size,35,35);
+    bi_bases[1]=find_bi_base(bases,checks,dat_size,35,sequence[0]);
+    for(int i=0;i+1<len;i++){
+        bi_bases[i+2]=find_bi_base(bases,checks,dat_size,sequence[i],sequence[i+1]);
+    }
+    bi_bases[len+2]=find_bi_base(bases,checks,dat_size,sequence[len-1],35);
+    bi_bases[len+3]=find_bi_base(bases,checks,dat_size,35,35);
+    
+    int base=0;
+    int left=0;int left2=0;
+    int right=0;int right2=0;
+    for(int i=0;i<len;i++){
+        int* value_offset=values+i*4;
+        int* weight_offset;
+        base=uni_bases[i+1];
         if(base!=-1){
             int offset=bases[base];
-            for(int j=0;j<4;j++){
-                values[i*4+j]+=model->fl_weights[offset*4+j];
-            }
+            weight_offset=model->fl_weights+offset*4;
+            for(int j=0;j<4;j++)
+                value_offset[j]+=weight_offset[j];
         }
-        base=find_uni_base(bases,checks,dat_size,left);
+        base=uni_bases[i];
         if(base!=-1){
             int offset=bases[base+1];
-            for(int j=0;j<4;j++){
-                values[i*4+j]+=model->fl_weights[offset*4+j];
-            }
+            weight_offset=model->fl_weights+offset*4;
+            for(int j=0;j<4;j++)
+                value_offset[j]+=weight_offset[j];
         }
-        base=find_uni_base(bases,checks,dat_size,right);
+        base=uni_bases[i+2];
         if(base!=-1){
             int offset=bases[base+2];
-            for(int j=0;j<4;j++){
-                values[i*4+j]+=model->fl_weights[offset*4+j];
-            }
+            weight_offset=model->fl_weights+offset*4;
+            for(int j=0;j<4;j++)
+                value_offset[j]+=weight_offset[j];
         }
         
-        base=find_bi_base(bases,checks,dat_size,left,sequence[i]);
+        base=bi_bases[i+1];
         if(base!=-1){
             int offset=bases[base];
-            for(int j=0;j<4;j++){
-                values[i*4+j]+=model->fl_weights[offset*4+j];
-            }
+            weight_offset=model->fl_weights+offset*4;
+            for(int j=0;j<4;j++)
+                value_offset[j]+=weight_offset[j];
         }
-        base=find_bi_base(bases,checks,dat_size,sequence[i],right);
+        base=bi_bases[i+2];
         if(base!=-1){
             int offset=bases[base+1];
-            for(int j=0;j<4;j++){
-                values[i*4+j]+=model->fl_weights[offset*4+j];
-            }
+            weight_offset=model->fl_weights+offset*4;
+            for(int j=0;j<4;j++)
+                value_offset[j]+=weight_offset[j];
         }
-        base=find_bi_base(bases,checks,dat_size,left2,left);
+        base=bi_bases[i];
         if(base!=-1){
             int offset=bases[base+2];
-            for(int j=0;j<4;j++){
-                values[i*4+j]+=model->fl_weights[offset*4+j];
-            }
+            weight_offset=model->fl_weights+offset*4;
+            for(int j=0;j<4;j++)
+                value_offset[j]+=weight_offset[j];
         }
-        
-        base=find_bi_base(bases,checks,dat_size,right,right2);
+        base=bi_bases[i+3];
         if(base!=-1){
             int offset=bases[base+3];
-            for(int j=0;j<4;j++){
-                values[i*4+j]+=model->fl_weights[offset*4+j];
-            }
+            weight_offset=model->fl_weights+offset*4;
+            for(int j=0;j<4;j++)
+                value_offset[j]+=weight_offset[j];
         }
     }
     
-    /*
-    for(int i=0;i<len;i++){
-        int base=find_uni_base(bases,checks,dat_size,sequence[i]);
-        if(base==-1)continue;
-        int offset=bases[base]*4;
-        for(int j=0;j<4;j++){
-            values[i*4+j]+=model->fl_weights[offset+j];
-        }
-        if(i>0)
-            for(int j=0;j<4;j++){
-                values[(i-1)*4+j]+=model->fl_weights[offset+4+j];
-            }
-        if(i+1<len)
-            for(int j=0;j<4;j++){
-                values[(i+1)*4+j]+=model->fl_weights[offset+8+j];
-            }
-        //printf("%d\n",base);
-    }
-    
-    for(int i=0;i+1<len;i++){
-        int base=find_bi_base(bases,checks,dat_size,sequence[i],sequence[i+1]);
-        if(base==-1)continue;
-        int offset=bases[base]*4;
-        
-        if(i>0)
-            for(int j=0;j<4;j++){
-                values[(i-1)*4+j]+=model->fl_weights[offset+12+j];
-            }
-        for(int j=0;j<4;j++){
-            values[i*4+j]+=model->fl_weights[offset+4+j];
-        }
-        
-        for(int j=0;j<4;j++){
-            values[(i+1)*4+j]+=model->fl_weights[offset+j];
-        }
-        if(i+2<len)
-            for(int j=0;j<4;j++){
-                values[(i+2)*4+j]+=model->fl_weights[offset+8+j];
-            }
-        
-        
-        //printf("%d\n",base);
-    }*/
 }
 /*对缓存里的串分词并编码成utf-8输出*/
 void output(){
