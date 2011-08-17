@@ -1,1 +1,1 @@
-g++ cws_decoder.cpp -I ../path_labeling -o cws_decoder.exe -O3
+g++ sl_decoder.cpp -I ../path_labeling -o sl_decoder.exe -O3

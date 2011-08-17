@@ -8,6 +8,8 @@
 /*缓存大小*/
 const int max_length=10000;
 
+
+
 /*句子*/
 int len=0;//句子长度
 int sequence[max_length];//句子
@@ -22,13 +24,14 @@ int* bases;//base数组
 int* checks;//check数组
 
 /*模型*/
-Model* model=new Model("model.bin");
+Model* model;
 
 /*解码用*/
 Node nodes[max_length];//只用来存储解码用的节点的拓扑结构
-int* values=(int*)calloc(4,max_length*model->l_size);
-Alpha_Beta* alphas=(Alpha_Beta*)calloc(sizeof(Alpha_Beta),max_length*model->l_size);
-int* result=(int*)calloc(4,max_length*model->l_size);
+int* values;
+Alpha_Beta* alphas;
+int* result;
+char** label_info;
 
 /*初始化一个双数组trie树*/
 void load_da(char* filename,int* &base_array,int* &check_array,int &size){
@@ -36,13 +39,13 @@ void load_da(char* filename,int* &base_array,int* &check_array,int &size){
     FILE * pFile=fopen ( filename , "rb" );
     /*得到文件大小*/
     fseek (pFile , 0 , SEEK_END);
-    size=ftell (pFile)/4/2;//双数组大小
+    size=ftell (pFile)/sizeof(int)/2;//双数组大小
     rewind (pFile);//重置文件指针到开头
     /*前一半是base数组，后一半是check数组*/
     base_array=(int*) malloc (sizeof(int)*size);
     check_array=(int*) malloc (sizeof(int)*size);
-    fread (base_array,4,size,pFile);
-    fread (check_array,4,size,pFile);
+    fread (base_array,sizeof(int),size,pFile);
+    fread (check_array,sizeof(int),size,pFile);
     //关闭文件
     fclose (pFile);
 };
@@ -59,14 +62,34 @@ inline void find_bases(int*bases,int*checks,int dat_size,int ch1,int ch2,int& un
     bi_base=bases[ind]+32;
 }
 
-void init(){
+void init(char* model_file,char* dat_file,char* label_file){
+    /*模型*/
+    model=new Model(model_file);
+    
+    /*解码用*/
+    values=(int*)calloc(sizeof(int),max_length*model->l_size);
+    alphas=(Alpha_Beta*)calloc(sizeof(Alpha_Beta),max_length*model->l_size);
+    result=(int*)calloc(sizeof(int),max_length*model->l_size);
+    label_info=new char*[model->l_size];
+    
     for(int i=0;i<max_length;i++){
         int* pr=new int[2];
         pr[0]=i-1;
         pr[1]=-1;
         nodes[i].predecessors=pr;
     };
-    load_da("dat.bin",bases,checks,dat_size);
+    load_da(dat_file,bases,checks,dat_size);
+    
+    char* str=new char[16];
+    FILE *fp;
+    fp = fopen(label_file, "r");
+    int ind=0;
+    while( fscanf(fp, "%s", str)==1){
+        label_info[ind]=str;
+        str=new char[16];
+        ind++;
+    }
+    fclose(fp);
 }
 
 void dp(){
@@ -87,11 +110,11 @@ inline void add_values(int *value_offset,int base,int del){
         return;
     }
     int offset=bases[bases[base]+del];
-    int* weight_offset=model->fl_weights+offset*4;
-    value_offset[0]+=weight_offset[0];
-    value_offset[1]+=weight_offset[1];
-    value_offset[2]+=weight_offset[2];
-    value_offset[3]+=weight_offset[3];
+    int* weight_offset=model->fl_weights+offset*model->l_size;
+    
+    for(int j=0;j<model->l_size;j++){
+        value_offset[j]+=weight_offset[j];
+    }
 }
 void put_values(){
     /*nodes*/
@@ -113,7 +136,7 @@ void put_values(){
     
     int base=0;
     for(int i=0;i<len;i++){
-        int* value_offset=values+i*4;
+        int* value_offset=values+i*model->l_size;
         if((base=uni_bases[i+1])!=-1)
             add_values(value_offset,base,49);
         if((base=uni_bases[i])!=-1)
@@ -129,7 +152,6 @@ void put_values(){
         if((base=bi_bases[i+3])!=-1)
             add_values(value_offset,base,52);
     }
-    
 }
 /*对缓存里的串分词并编码成utf-8输出*/
 void output(){
@@ -148,16 +170,18 @@ void output(){
             putchar(0x80|((c>>6)&0x3f));
             putchar(0x80|(c&0x3f));
         }
-        //putchar(48+result[i]);
-        //在分词位置输出空格
-        if((result[i]>1)&&((i+1)<len)
-           )
-            putchar(' ');
+        //printf("(%d)",result[i]);
+
+        if(label_info[result[i]][0]=='1'){//分词位置
+            if(*(label_info[result[i]]+1))//输出标签（如果有的话）
+                printf("%s",label_info[result[i]]+1);
+            if((i+1)<len)putchar(' ');//在分词位置输出空格
+        }
+        
     }
 }
 
-int main () {
-    init();
+void read_stream(){
     /*
      这里是主循环
      在这里，不停的读入utf-8编码的字符，根据其编码格式解码。
@@ -194,6 +218,15 @@ int main () {
             break;
         }
     }
-    
+}
+
+int main (int argc,char **argv) {
+    if(argc==1){
+        init("model.bin","dat.bin","label_info.txt");
+    }
+    else{
+        init(argv[1],argv[2],argv[3]);
+    }
+    read_stream();
     return 0;
 }
