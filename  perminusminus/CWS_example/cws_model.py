@@ -72,10 +72,10 @@ class CWS_Model:
 if __name__=='__main__':
     libfile=''
     if platform.system()=='Linux':
-        libfile='./libper--.so'
+        libfile='../path_labeling/libper--.so'
     else:
         libfile='libper--'
-    model=CWS_Model(libfile,'index.txt',"model.bin")
+    model=CWS_Model(libfile,'tmp/index.txt',"tmp/model.bin")
     
     ot=time.time()
     try:
@@ -88,5 +88,5 @@ if __name__=='__main__':
         pass
     else:
         pass
-    print(time.time()-ot)
+    #print(time.time()-ot)
     

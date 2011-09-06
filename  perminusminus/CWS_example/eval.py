@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import sys
 def to_set(seq):
     offset=0

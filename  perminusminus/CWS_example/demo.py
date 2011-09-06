@@ -42,10 +42,10 @@ class CWS_Data:
 
 libfile=''
 if platform.system()=='Linux':
-    libfile='./libper--.so'
+    libfile='../path_labeling/libper--.so'
 else:
     libfile='libper--'
-model=cws_model.CWS_Model(libfile,'index.json',"model.bin")
+model=cws_model.CWS_Model(libfile,'tmp/index.txt',"tmp/model.bin")
 
 lock=multiprocessing.Lock()
 def do_cws(seq):
