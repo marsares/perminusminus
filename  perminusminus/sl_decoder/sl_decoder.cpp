@@ -5,6 +5,60 @@
 #include "sl_decoder.h"
 
 
+void output_allow_tagging(){
+    int max_ind=0;
+    int max_score=alphas[0].value+betas[0].value-values[0];
+    for(int i=1;i<4;i++){
+        int score=alphas[i].value+betas[i].value-values[i];
+        if(score>max_score){
+            max_score=score;
+            max_ind=i;
+        }
+    }
+    
+    for(int i=0;i<len;i++){
+        int va=alphas[i*4].value+betas[i*4].value-values[i*4];
+        int vb=alphas[i*4+1].value+betas[i*4+1].value-values[i*4+1];
+        int score=va>vb?va:vb;
+        allow_com[i]=(score+threshold>=max_score);
+        va=alphas[i*4+2].value+betas[i*4+2].value-values[i*4+2];
+        vb=alphas[i*4+3].value+betas[i*4+3].value-values[i*4+3];
+        score=va>vb?va:vb;
+        allow_sep[i]=(score+threshold>=max_score);
+    }
+    //allow_sep[len-1]=1;
+    //printf("\n");
+    int m_score=0;
+    for(int i=0;i<len;i++){
+        if((i>0)&&(!allow_sep[i-1]))continue;
+        m_score=0;
+        for(int j=i;j<len;j++){
+            if(allow_sep[j]||j==(len-1)){
+                if(i!=j){//多字词
+                    int score=alphas[i*4].value+betas[j*4+2].value;
+                    if(i+1==j){
+                        score+=model->ll_weights[2];
+                    }else{
+                        score+=m_score+model->ll_weights[1]+model->ll_weights[6]
+                                +model->ll_weights[5]*(j-i-2);
+                    }
+                    if(score+threshold>=max_score)printf("%d,%d,%d ",i,j+1,
+                        max_score-score);
+                }else{//单字词
+                    //输出边界距离
+                    printf("%d,%d,%d ",i,j+1,
+                        max_score-(alphas[i*4+3].value+betas[i*4+3].value-values[i*4+3]));
+                }
+            }
+            if(!allow_com[j])break;
+            if(i!=j){
+                m_score+=values[j*4+1];
+            }
+        }
+    }
+}
+
+
 /*对缓存里的串分词并编码成utf-8输出*/
 void output(){
     put_values();//检索出特征值并初始化放在values数组里
@@ -36,7 +90,7 @@ void read_stream(){
                 putchar(c);
                 fflush(stdout);//flush输出流，即时的显示出去。
             }else{//一般ascii字符
-                sequence[len++]=c+65248;//半角转全角，放入缓存
+                sequence[len++]=c;//+65248;//半角转全角，放入缓存
             }
         }else if(!(c&0x20)){//2个byte的utf-8编码
             sequence[len++]=((c&0x1f)<<6)|
