@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import json
 import sys
 import json_to_binary
@@ -18,8 +19,8 @@ def _to_tags(postags,sen,lid):
     tags=[lid(t)for t in tags]
     #print(tags)
     return tags
-'''
 
+'''
 b_key_set=set()
 for line in open('data/bigram.txt',encoding='utf8'):
     line=line.split()
@@ -53,6 +54,7 @@ def trans(src,dst,index,label_index,mode='w',sep='/'):
     inder=indexer.Indexer(index,mode)
     file=open(dst,'wb')
     ln=0
+    #print(src)
     for line in open(src,encoding='utf8'):
         ln+=1
         #print(line)
@@ -92,8 +94,21 @@ def trans(src,dst,index,label_index,mode='w',sep='/'):
 
 if __name__=='__main__':
     if len(sys.argv)==1:#empty argv, do the debug
-        trans('data/ctb5_training.txt','data/training.bin','data/index.txt','data/label_info.txt','w',sep='_')
-        trans('data/ctb5_test.txt','data/test.bin','data/index.txt','data/label_info.txt','r',sep='_')
+        print('haha')
+        trans('data/ctb_training.txt','data/training.bin','data/index.txt','data/label_info.txt','w',sep='_')
+        trans('data/ctb_test.txt','data/test.bin','data/index.txt','data/label_info.txt','r',sep='_')
         
         exit()
     
+    
+    task=sys.argv[1]
+    if task=='l':
+        print("reading training data")
+        #print(sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5],'w',sys.argv[6])
+        trans(sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5],'w',sys.argv[6])
+        exit()
+    if task=='p':
+        print("reading test data")
+        #print(sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5],'w',sys.argv[6])
+        trans(sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5],'r',sys.argv[6])
+        exit()
