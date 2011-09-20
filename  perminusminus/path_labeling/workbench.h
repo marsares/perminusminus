@@ -145,7 +145,7 @@ struct PERMM{
     }
     void decode(Graph*& graph){
         this->add_values(graph);
-        
+
         dp_decode(
             this->model->l_size,
             this->model->ll_weights,
@@ -175,6 +175,8 @@ struct PERMM{
     }
     void cal_betas(Graph*& graph){
         int*buffer=dp_cal_successors(graph->node_count,graph->nodes);
+
+        
         dp_cal_betas(
             this->model->l_size,
             this->model->ll_weights,

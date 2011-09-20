@@ -51,8 +51,17 @@ def gold_set(gold):
             offset=i+1
     return g_set
     
+def check_wf(go,rs):
+    l=sorted(list(go))[-1][1]
+    rst=sorted(list((a,b) for a,b,t,m in rs if m==0))
+    ee=0
+    for b,e,*r in rst:
+        if b>ee:return False
+        ee=e
+    return True
 
 if __name__=="__main__":
+    
     if len(sys.argv)==1:
         model_path='data/model.bin'
         label_path='data/label_info.txt'
@@ -77,8 +86,7 @@ if __name__=="__main__":
         #input()
         #print(result)
         #print(values)
-        mm=[max(a+b-v for a,v,b in vv) for vv in values]
-        md=max([abs(x-mm[0]) for x in mm]+[md])
+        
         
         score=max(max(a+b-v for a,v,b in vv) for vv in values)
         
@@ -124,6 +132,16 @@ if __name__=="__main__":
                     pass
         #print(arcs)
         print(' '.join(','.join([str(l),str(r),t,str(m)]) for l,r,t,m in arcs))
+        
+        '''if not check_wf(gs,arcs):
+            print('<<<<<<<<<<<<<<<<<<<<')
+            print(sorted(gs))
+            print(arcs)
+            for x in reduced:
+                print(x)
+            print(gold)
+            
+            input()'''
         rs={(l,r,t) for l,r,t,m in arcs}
         
         rs={(l,r) for l,r,t in rs}

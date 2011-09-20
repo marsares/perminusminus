@@ -105,7 +105,7 @@ def trans(src,dst,index,label_index,mode='w',sep='/'):
 if __name__=='__main__':
     if len(sys.argv)==1:#empty argv, do the debug
         print('haha')
-        trans('data/ctb_training.txt','data/training.bin','data/index.txt','data/label_info.txt','w',sep='_')
+        #trans('data/ctb_training.txt','data/training.bin','data/index.txt','data/label_info.txt','w',sep='_')
         trans('data/ctb_test.txt','data/test.bin','data/index.txt','data/label_info.txt','r',sep='_')
         #trans('data/ctb_dev.txt','data/test.bin','data/index.txt','data/label_info.txt','r',sep='_')
         

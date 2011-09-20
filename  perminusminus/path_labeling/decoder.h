@@ -54,7 +54,6 @@ struct Alpha_Beta{
     int value;
     int node_id;
     int label_id;
-    
 };
 int alpha_beta_comp(const void* a,const void* b){
     return ((Alpha_Beta*)b)->value-((Alpha_Beta*)a)->value;
