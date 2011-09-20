@@ -7,6 +7,7 @@ def to_set(seq,labels,with_tag):
     for i,label_ind in enumerate(seq):
         x,tag=(labels[label_ind])
         if x=='2' or x=='3':
+        #if '2' in labels[label_ind] or '3' in labels[label_ind]:
             if with_tag:
                 s.add((offset,i+1,tag))
             else:
@@ -25,6 +26,9 @@ def eval_sen(g,r,labels,with_tag):
     re=to_set(r,labels,with_tag)
     co=go&re
     
+    
+    #print(re)
+    #input()
     return len(go),len(re),len(co)
 
 

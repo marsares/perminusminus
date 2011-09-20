@@ -9,13 +9,15 @@ import indexer
 def _to_tags(postags,sen,lid):
     tags=[]
     for t,w in zip(postags,sen):
+        #t=''#debug
         if len(w)==1:
             tags.append('3/'+t)
         else:
             tags.append('0/'+t)
             for i in range(len(w)-2):tags.append('1/'+t)
             tags.append('2/'+t)
-    
+        
+        
     tags=[lid(t)for t in tags]
     #print(tags)
     return tags
@@ -39,6 +41,8 @@ def gen_keys(seq,i):
     keys.append(mid+right+' 2')
     keys.append(left2+left+' 3')
     keys.append(right+right2+' 4')
+    #keys.append(left+right+' 5')
+    #keys=[x for x in keys if '#' not in x]
     '''
     if left+mid in b_key_set:keys.append(left+mid+' 1')
     if mid+right in b_key_set:keys.append(mid+right+' 2')
@@ -52,6 +56,10 @@ def gen_keys(seq,i):
 def trans(src,dst,index,label_index,mode='w',sep='/'):
     lid=indexer.Indexer(label_index,mode)
     inder=indexer.Indexer(index,mode)
+    
+    #lid=indexer.Indexer(label_index,'r')
+    #print(lid,mode)
+    
     file=open(dst,'wb')
     ln=0
     #print(src)
@@ -66,7 +74,9 @@ def trans(src,dst,index,label_index,mode='w',sep='/'):
         #print(len(wts))
         #input()
         seq=''.join(line)
-        
+        #if (mode=='r'):
+        #print(seq)
+        #input()
         
         graph=[]
         
@@ -97,6 +107,7 @@ if __name__=='__main__':
         print('haha')
         trans('data/ctb_training.txt','data/training.bin','data/index.txt','data/label_info.txt','w',sep='_')
         trans('data/ctb_test.txt','data/test.bin','data/index.txt','data/label_info.txt','r',sep='_')
+        #trans('data/ctb_dev.txt','data/test.bin','data/index.txt','data/label_info.txt','r',sep='_')
         
         exit()
     
