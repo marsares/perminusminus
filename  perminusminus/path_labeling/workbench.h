@@ -62,33 +62,42 @@ struct PERMM{
         //}
     };
     void update(Graph* graph){
-        
+        /**
+         * 更新
+         * 根据标签：
+         * 非负数表示标准答案
+         * -1表示无gold standard的标签，且需要更新
+         * -2表示无gold standard的标签，但不更新
+         * */
         int fid=0;
         int*p=graph->features;
         int l_size=this->model->l_size;
         for(int i=0;i<graph->node_count;i++){
-            if(graph->labels[i]==this->result[i]){
-                while((*(p++))>=0);
+            /* 如果正确就不动作
+             * 当然如果标准答案标注为 -2, 也不动作
+             * */
+            if((graph->labels[i]==-2)||(graph->labels[i]==this->result[i])){
+                while((*(p++))>=0);//但是要滑动特征指针
                 continue;
             }
-            while((fid=*(p++))>=0){
-                if(graph->labels[i]>=0){
+            while((fid=*(p++))>=0){//枚举对应位置的特征
+                if(graph->labels[i]>=0){//如果是正确答案，特征权重提高，平均的也要加
                     this->model->fl_weights[fid*l_size+graph->labels[i]]++;
                     this->model->ave_fl_weights[fid*l_size+graph->labels[i]]+=
                         this->steps;
                 }
-                if(this->result[i]>=0){
+                if(this->result[i]>=0){//如果是输出，特征权重降低，平均的也要减
                     this->model->fl_weights[fid*l_size+this->result[i]]--;
                     this->model->ave_fl_weights[fid*l_size+this->result[i]]-=
                         this->steps;
                 }
             };
         }
-        
+
         int*pip;
         int pi;
         int ll_ind;
-        for(int i=0;i<graph->node_count;i++){
+        for(int i=0;i<graph->node_count;i++){//标准答案的bigram feature
             if(graph->labels[i]>=0){
                 pip=graph->nodes[i].predecessors;
                 pi=0;
@@ -102,7 +111,7 @@ struct PERMM{
             }
         }
         
-        for(int i=0;i<graph->node_count;i++){
+        for(int i=0;i<graph->node_count;i++){//程序输出的bigram feature
             if(this->result[i]>=0){
                 pip=graph->nodes[i].predecessors;
                 pi=0;

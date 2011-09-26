@@ -1,7 +1,7 @@
 #!/bin/bash
 echo transform data
-./cws_transform.py l "msr_training.utf8" "tmp/training.bin" "tmp/index.txt"
-./cws_transform.py p "tmp/index.txt" "msr_test_gold.utf8" "tmp/test.bin"
+#./cws_transform.py l "msr_training.utf8" "tmp/training.bin" "tmp/index.txt"
+#./cws_transform.py p "tmp/index.txt" "msr_test_gold.utf8" "tmp/test.bin"
 
 echo learn and predict
 ../path_labeling/per-- l "tmp/training.bin" "tmp/model.bin" 25

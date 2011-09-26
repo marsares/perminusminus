@@ -95,35 +95,6 @@ struct Graph_Loader{
     }
     
     int load(Graph* &graph){
-        //if(mode==1){
-        //    if(pFile!=NULL){//read
-        //        int data_size;
-        //        if(!fread(&data_size,sizeof(int),1,this->pFile)){
-        //            fclose(pFile);
-        //            g_id=-1;
-        //            pFile=NULL;
-        //            graph=NULL;
-        //            return 0;
-        //        }
-        //        load_graph(data_size,graph);
-        //        g_size++;
-        //        if(g_size==max_g_size){
-        //            max_g_size*=2;
-        //            graphs=(Graph**)realloc(graphs,sizeof(Graph)*max_g_size);
-        //        }
-        //        graphs[g_size-1]=graph;
-        //        return 1;
-        //    }else{
-        //        g_id++;
-        //        if(g_id==g_size){
-        //            graph=NULL;
-        //            g_id=-1;
-        //            return 0;
-        //        }
-        //        graph=graphs[g_id];
-        //        return 1;
-        //    }
-        //}
         
         delete graph;
         int data_size;
