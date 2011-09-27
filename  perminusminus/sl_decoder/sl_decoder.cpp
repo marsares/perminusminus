@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
+#include <unistd.h>
 #include "sl_decoder.h"
 
 
@@ -105,13 +105,33 @@ void read_stream(){
     }
 }
 
+
+void showhelp(){
+}
+
 int main (int argc,char **argv) {
-    if(argc==1){
-        init("model.bin","dat.bin","label_info.txt");
+    
+    int c;
+    char* label_trans=NULL;
+    char* label_lists_file=NULL;
+    while ( (c = getopt(argc, argv, "b:u:h")) != -1) {
+        switch (c) {
+            case 'b' : 
+                label_trans = optarg;
+                break;
+            case 'u' : 
+                label_lists_file = optarg;
+                break;
+            case 'h' :
+            case '?' : 
+            default : 
+                showhelp();
+                return 1;
+        }
     }
-    else{
-        init(argv[1],argv[2],argv[3]);
-    }
+    
+    init(argv[optind],argv[optind+1],argv[optind+2],label_trans,label_lists_file);
+
     read_stream();
     return 0;
 }

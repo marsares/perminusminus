@@ -2,7 +2,7 @@ import json
 import array
 import struct
 
-'''
+"""
 
 type:
     0: mormal
@@ -18,7 +18,7 @@ node ::= [type,[predecessor, ...],label,[feature, ...]]
 format for each graph
 remaining_int_length node_count
 (node type)+ (predecessors -1)+ (label)+ (features -1)+
-'''
+"""
 
 def graph_to_file(graph,binfile):
     

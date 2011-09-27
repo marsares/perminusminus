@@ -2,11 +2,16 @@
 #define __DP_H__
 #include<stdlib.h>
 
-//topological information about a node
+
+
+/**
+ * topological information about a node
+ * type的定义： 默认0，如果是开始节点+1，如果是结尾节点+2
+ * */
 struct Node{
-    int type;//initial? terminal?
-    int* predecessors;//ends with a -1
-    int* successors;//ends with a -1
+    int type;///默认0，如果是开始节点+1，如果是结尾节点+2
+    int* predecessors;///ends with a -1
+    int* successors;///ends with a -1
 };
 
 /**given prececessors, calculate successors*/
@@ -106,40 +111,63 @@ inline void nb_heap_insert(Alpha_Beta* heap,int max_size,int& count,Alpha_Beta& 
 
 /** The DP algorithm(s) for path labeling */
 inline void dp_decode(
-        /**something about the model*/
-        int l_size,
-        int* ll_weights,
-        /**something about the graph*/
-        int node_count,//numbers of nodes
-        Node* nodes,
-        //something about the scores
-        int* values,//value for i-th node with j-th label
-        Alpha_Beta* alphas,//alpha value (and the pointer) for i-th node with j-th label
-        //something about the result
-        int* result
+        int l_size,///标签个数
+        int* ll_weights,///标签间权重
+        int node_count,///节点个数
+        Node* nodes,///节点数据
+        int* values,///value for i-th node with j-th label
+        Alpha_Beta* alphas,///alpha value (and the pointer) for i-th node with j-th label
+        int* result,
+        int** pre_labels=NULL,///每种标签可能的前导标签（以-1结尾）
+        int** allowed_label_lists=NULL///每个字可能的标签列表
         ){
+
     
     //calculate alphas
     int node_id;
     int* p_node_id;
+    int* p_pre_label;
+    int* p_allowed_label;
+    int k;
     Alpha_Beta* tmp;
     Alpha_Beta best;best.node_id=-1;
     int score;
-    
+    //if(allowed_label_lists)printf("haha");
     for(int i=0;i<node_count;i++){//for each node
-        for(int j=0;j<l_size;j++){//for each label
+        p_allowed_label=allowed_label_lists?allowed_label_lists[i]:NULL;
+        
+        for(int j=0;j<l_size;j++){///遍历当前节点所有可能的标签
             tmp=&alphas[i*l_size+j];
             tmp->node_id=-2;//non reachable
+            
+            if(p_allowed_label){
+                if(((*p_allowed_label)!=-1)&&((*p_allowed_label)!=j))
+                    continue;
+                p_allowed_label++;
+            }
             tmp->value=0;
             p_node_id=nodes[i].predecessors;
+            p_pre_label=pre_labels?pre_labels[j]:NULL;
             while((node_id=*(p_node_id++))>=0){
-                for(int k=0;k<l_size;k++){
-                    if(alphas[node_id*l_size+k].node_id==-2)continue;//not reachable
-                    score=alphas[node_id*l_size+k].value+ll_weights[k*l_size+j];
-                    if((tmp->node_id<0)||(score>tmp->value)){
-                        tmp->value=score;
-                        tmp->node_id=node_id;
-                        tmp->label_id=k;
+                if(p_pre_label){
+                    while((k=(*p_pre_label++))!=-1){
+                        if(alphas[node_id*l_size+k].node_id==-2)continue;//not reachable
+                        score=alphas[node_id*l_size+k].value+ll_weights[k*l_size+j];
+                        if((tmp->node_id<0)||(score>tmp->value)){
+                            tmp->value=score;
+                            tmp->node_id=node_id;
+                            tmp->label_id=k;
+                        }
+                    }
+                }else{
+                    for(k=0;k<l_size;k++){//迭代前面的节点的各种标签
+                        if(alphas[node_id*l_size+k].node_id==-2)continue;//not reachable
+                        score=alphas[node_id*l_size+k].value+ll_weights[k*l_size+j];
+                        if((tmp->node_id<0)||(score>tmp->value)){
+                            tmp->value=score;
+                            tmp->node_id=node_id;
+                            tmp->label_id=k;
+                        }
                     }
                 }
             }

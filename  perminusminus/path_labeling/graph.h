@@ -4,23 +4,20 @@
 #include<stdlib.h>
 #include"decoder.h"
 
-/*
-binary file format for each graph
-remaining_int_length node_count
-(node type)+ (predecessors -1)+ (label)+ (features -1)+
-*/
-/*
-Text file format for each graph
-node_count
-(node type)+
-(predecessors -1)+
-(label)+
-(features -1)+
-*/
+/**
+ * binary file format for each graph
+ * remaining_int_length node_count
+ * (node type)+ (predecessors -1)+ (label)+ (features -1)+
+ * 后面跟着可选的数据：
+ * 
+ * 
+ * 
+ * */
 
-struct Graph{
-    int node_count;
-    Node* nodes;
+
+struct Graph{///图的数据结构
+    int node_count;///图中节点个数
+    Node* nodes;///节点信息
     int* labels;
     int* features;
     int* buffer;
@@ -74,6 +71,9 @@ struct Graph_Loader{
         //}
     };
     
+    /**
+     * 在文件中读如data_size这么长的数据当作graph
+     * */
     void load_graph(int data_size,Graph* &graph){
         
         int* buffer=(int*)malloc(data_size*4);
@@ -97,9 +97,8 @@ struct Graph_Loader{
     int load(Graph* &graph){
         
         delete graph;
-        int data_size;
-        //printf("check\n");
-        if(!fread(&data_size,sizeof(int),1,this->pFile)){
+        int data_size;///段长度
+        if(!fread(&data_size,sizeof(int),1,this->pFile)){///是否还有内容
             graph=NULL;
             fseek(pFile,0,SEEK_SET);
             return 0;
