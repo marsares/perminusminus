@@ -26,8 +26,9 @@ struct Graph{///图的数据结构
         this->nodes=new Node[node_count];
     };
     ~Graph(){
+        void* rtn_value;
         delete[] this->nodes;
-        if((this->buffer)!=NULL)realloc(this->buffer,0);
+        if((this->buffer)!=NULL)rtn_value=realloc(this->buffer,0);
     };
 };
 
@@ -75,9 +76,9 @@ struct Graph_Loader{
      * 在文件中读如data_size这么长的数据当作graph
      * */
     void load_graph(int data_size,Graph* &graph){
-        
+        int rtn_value;
         int* buffer=(int*)malloc(data_size*4);
-        fread(buffer,4,data_size,pFile);
+        rtn_value=fread(buffer,4,data_size,pFile);
         int* p=buffer;
         int node_count;
         node_count=*(p++);

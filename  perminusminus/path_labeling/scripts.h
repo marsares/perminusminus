@@ -10,8 +10,8 @@
 /**
 three high level scripts
 */
-void train(char* trainingfile,char* modelfile,int iterations);
-void test(char* modelfile,char*testfile,char*resultfile,int decode_type);
+void train(char* trainingfile,char* modelfile,int iterations,char*bigram_file);
+void test(char* modelfile,char*testfile,char*resultfile,int decode_type,char*bigram_file);
 
 
 
@@ -42,10 +42,11 @@ void count_size(Graph_Loader& gl,int&l_size,int&f_size,int&g_size){
 
 
 
-void test(char* modelfile,char*testfile,char*resultfile,int decode_type){
+void test(char* modelfile,char*testfile,char*resultfile,int decode_type,
+        char*bigram_file=NULL){
     Model* model=new Model(modelfile);
     printf("model loaded\n");
-    PERMM permm(model,(decode_type>0?decode_type:1));
+    PERMM permm(model,(decode_type>0?decode_type:1),bigram_file);
     Graph_Loader* gl;
     FILE* pFile=fopen(resultfile,"w");
     Graph* graph=NULL;
@@ -115,7 +116,7 @@ void test(char* modelfile,char*testfile,char*resultfile,int decode_type){
 
 
 
-void train(char* trainingfile,char* modelfile,int iterations){
+void train(char* trainingfile,char* modelfile,int iterations,char* bigram_file=NULL){
     
     Graph_Loader* gl=new Graph_Loader(trainingfile);
     
@@ -126,7 +127,7 @@ void train(char* trainingfile,char* modelfile,int iterations){
     printf("number of features: %d\n",f_size);
     Model* model=new Model(l_size,f_size);
     
-    PERMM permm(model);
+    PERMM permm(model,1,bigram_file);
     
     Graph* graph=NULL;
     for(int t=0;t<iterations;t++){

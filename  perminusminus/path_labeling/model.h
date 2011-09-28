@@ -56,17 +56,18 @@ struct Model{
     
     Model(char* filename){
         FILE* pFile;
+        int rtn_value;
         pFile=fopen(filename,"rb");
-        fread(&(this->l_size),4,1,pFile);
-        fread(&(this->f_size),4,1,pFile);
+        rtn_value=fread(&(this->l_size),4,1,pFile);
+        rtn_value=fread(&(this->f_size),4,1,pFile);
         int l_size=this->l_size;
         int f_size=this->f_size;
         //printf("%d %d\n",this->l_size,this->f_size);
         this->ll_weights=(int*)malloc(sizeof(int)*l_size*l_size);
         this->fl_weights=(int*)malloc(sizeof(int)*l_size*f_size);
         
-        fread((this->ll_weights),4,l_size*l_size,pFile);
-        fread((this->fl_weights),4,l_size*f_size,pFile);
+        rtn_value=fread((this->ll_weights),4,l_size*l_size,pFile);
+        rtn_value=fread((this->fl_weights),4,l_size*f_size,pFile);
         fclose(pFile);
     }
     

@@ -6,6 +6,8 @@
 #include"graph.h"
 
 
+
+
 struct PERMM{
     int length;
     int* values;
@@ -14,15 +16,69 @@ struct PERMM{
     int n_best;
     int* result;
     Model* model;
+    ///allowed bigram
+    int *allowed_label_bigrams;
+    int **allowed_pre_labels;
+    int **allowed_post_labels;
+    ///for learning
     int steps;
     int eval_strandard_label;
     int eval_correct_label;
     int eval_result_label;
-    PERMM(Model* model,int n_best=1){
+    void load_allowed_label_bigrams(char*filename){
+        /**
+         * remaining , (pre ... , -1)*x (post ... , -1)*x
+         * */
+
+        int rtn_value;
+        //打开文件
+        FILE * pFile=fopen ( filename , "rb" );
+        
+        /*得到文件大小*/
+        int remain_size=0;
+        rtn_value=fread (&remain_size,sizeof(int),1,pFile);
+
+        /*得到矩阵数据*/
+        this->allowed_label_bigrams=new int[remain_size];
+        rtn_value=fread (this->allowed_label_bigrams,sizeof(int),remain_size,pFile);
+        
+        /*计算标签个数*/
+        int label_size=0;
+        for(int i=0;i<remain_size;i++){
+            if(this->allowed_label_bigrams[i]==-1)label_size++;
+        }
+        label_size/=2;
+        /*设定各个标签的指针*/
+        this->allowed_pre_labels=new int*[label_size];
+        this->allowed_post_labels=new int*[label_size];
+        int ind=0;
+        
+        for(int i=0;i<label_size;i++){
+            this->allowed_pre_labels[i]=this->allowed_label_bigrams+ind;
+            while(this->allowed_label_bigrams[ind]!=-1)ind++;ind++;
+            this->allowed_post_labels[i]=this->allowed_label_bigrams+ind;
+            while(this->allowed_label_bigrams[ind]!=-1)ind++;ind++;
+        }
+        //printf("%d",remain_size);
+        fclose (pFile);
+        
+        return;
+    }
+    PERMM(Model* model,int n_best=1,char*label_bigram_file=NULL){
         this->eval_reset();
         this->steps=0;
         this->length=10;
         this->n_best=n_best;
+        
+        if(label_bigram_file){
+            
+            load_allowed_label_bigrams(label_bigram_file);
+        }else{
+            this->allowed_label_bigrams=NULL;
+            this->allowed_pre_labels=NULL;
+            this->allowed_post_labels=NULL;
+        }
+        //printf("(%s)\n",label_bigram_file);
         this->model=model;
         this->values=(int*)calloc(4,length*this->model->l_size);
         this->result=(int*)calloc(4,n_best*length*this->model->l_size);
@@ -154,7 +210,7 @@ struct PERMM{
     }
     void decode(Graph*& graph){
         this->add_values(graph);
-
+        
         dp_decode(
             this->model->l_size,
             this->model->ll_weights,
@@ -162,7 +218,8 @@ struct PERMM{
             graph->nodes,
             this->values,
             this->alphas,
-            this->result
+            this->result,
+            this->allowed_pre_labels
         );
 
         this->eval(graph);
