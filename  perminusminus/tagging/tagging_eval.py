@@ -33,10 +33,10 @@ def eval_sen(g,r,labels,with_tag):
 
 
 def one_pass(with_tag=True):
-    labels=[line.strip().split('/') for line in open('data/label_info.txt')]
+    labels=[line.strip().split('/') for line in open('tmp/label_info.txt')]
     
         
-    filename='data/result.txt'
+    filename='tmp/result.txt'
     if len(sys.argv)>=2:
         filename=sys.argv[1]
     cache=[]

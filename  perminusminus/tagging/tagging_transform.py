@@ -68,8 +68,12 @@ def trans(src,dst,index,label_index,mode='w',sep='/'):
         #print(line)
         
         wts=[x.rpartition(sep) for x in line.strip().split(' ')]
-        tags=[x[-1] for x in wts]
-        line=[x[0] for x in wts]
+        if sep==' ':
+            tags=['' for x in wts]
+            line=[x[-1] for x in wts]
+        else:
+            tags=[x[-1] for x in wts]
+            line=[x[0] for x in wts]
         
         #print(len(wts))
         #input()
@@ -106,8 +110,12 @@ if __name__=='__main__':
     if len(sys.argv)==1:#empty argv, do the debug
         print('haha')
         #trans('data/ctb_training.txt','data/training.bin','data/index.txt','data/label_info.txt','w',sep='_')
-        trans('data/ctb_test.txt','data/test.bin','data/index.txt','data/label_info.txt','r',sep='_')
+        #trans('data/ctb_test.txt','data/test.bin','data/index.txt','data/label_info.txt','r',sep='_')
         #trans('data/ctb_dev.txt','data/test.bin','data/index.txt','data/label_info.txt','r',sep='_')
+        
+        
+        trans('msr_training.utf8','tmp/training.bin','tmp/index.txt','tmp/label_info.txt','w',sep=' ')
+        trans('msr_test_gold.utf8','tmp/test.bin','tmp/index.txt','tmp/label_info.txt','r',sep=' ')
         
         exit()
     
@@ -115,11 +123,9 @@ if __name__=='__main__':
     task=sys.argv[1]
     if task=='l':
         print("reading training data")
-        #print(sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5],'w',sys.argv[6])
         trans(sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5],'w',sys.argv[6])
         exit()
     if task=='p':
         print("reading test data")
-        #print(sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5],'w',sys.argv[6])
         trans(sys.argv[2],sys.argv[3],sys.argv[4],sys.argv[5],'r',sys.argv[6])
         exit()
