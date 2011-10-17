@@ -3,7 +3,7 @@
 #include <unistd.h>
 
 int print_sentence=0;
-
+FILE* input_file=NULL;
 
 void do_match(char* dat_file){
     int* bases;
@@ -11,14 +11,14 @@ void do_match(char* dat_file){
     int dat_size;
     dat_load(dat_file,bases,checks,dat_size);
     
-    int mlength=1000;
+    int mlength=10000;
     int* cache=new int(mlength);
     int length=0;
     
     int rtn=0;
     int match=0;
     while(1){
-        rtn=utf8_stdin_readline(cache,mlength,length);
+        rtn=utf8_readline(input_file,cache,mlength,length);
         if(length){
             match=dat_print_match(bases,checks,dat_size,cache,length);
             if(match){
@@ -26,10 +26,15 @@ void do_match(char* dat_file){
                     putchar(' ');
                     utf8_stdout_write(cache,length);
                 }
-                if(rtn>0||rtn==-2){
+                if(rtn>0){
                     putchar(rtn);
                 }
+                if(rtn<0){
+                    printf("...\n");
+                    
+                }
             }
+            
         }
         if(rtn==EOF){
             break;
@@ -56,8 +61,12 @@ int main(int argc, char *argv[]){
         return 0;
     }
     int c;
-    while ( (c = getopt(argc, argv, "sh")) != -1) {
+    char *input_file_name=NULL;
+    while ( (c = getopt(argc, argv, "i:sh")) != -1) {
         switch (c) {
+            case 'i' : 
+                input_file_name = optarg;
+                break;
             case 's' : 
                 print_sentence = 1;
                 break;
@@ -69,7 +78,10 @@ int main(int argc, char *argv[]){
                 return 1;
         }
     }
-    
+    if(input_file_name){
+        //printf("%s\n",input_file_name);
+        input_file=fopen ( input_file_name , "r" );
+    }
     do_match(argv[argc-1]);
     
     

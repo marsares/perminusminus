@@ -28,6 +28,36 @@ int utf8_stdin_readline(int*&cache,int max_length,int&length){
         }
     }
 }
+
+int utf8_readline(FILE* file,int*&cache,int max_length,int&length){
+    length=0;
+    //printf("%d\n",(long)file);
+    int c;
+    while(1){//反复读取输入流直到文件末尾或者\n
+        if(length==max_length)return -2;
+        c=file?(fgetc(file)):(getchar());
+        if(c==EOF){
+            return c;
+        }
+        if(!(c&0x80)){//1个byte的utf-8编码
+            if(c==10){//回车
+                return c;
+            }else{//一般ascii字符
+                cache[length++]=c;//放入缓存
+            }
+        }else if(!(c&0x20)){//2个byte的utf-8编码
+            cache[length++]=((c&0x1f)<<6)|
+                ((file?(fgetc(file)):(getchar()))&0x3f);
+        }else if(!(c&0x10)){//3个byte的utf-8编码
+            cache[length++]=((c&0x0f)<<12)|
+                (((file?(fgetc(file)):(getchar()))&0x3f)<<6)|
+                ((file?(fgetc(file)):(getchar()))&0x3f);
+        }else{
+            return -3;
+        }
+    }
+}
+
 void utf8_stdout_write(int*sequence,int len){
     int c;
     for(int i=0;i<len;i++){
@@ -43,5 +73,6 @@ void utf8_stdout_write(int*sequence,int len){
             putchar(0x80|(c&0x3f));
         }
     }
+    fflush(stdout);
 }
 #endif

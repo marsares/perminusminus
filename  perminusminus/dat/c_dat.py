@@ -146,7 +146,7 @@ def make_dat(src,dst,sep=None):
         else:
             word,x,value=word.rpartition(sep)
             value=int(value)
-        print(len(word),word)
+        #print(len(word),word)
         base=dat(str_ord(word))
         
         dat.base[base]=value
