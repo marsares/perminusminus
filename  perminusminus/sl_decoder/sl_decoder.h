@@ -2,6 +2,7 @@
 #define __SL_DECODER_H__
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include "decoder.h"
@@ -48,6 +49,12 @@ int**label_trans_post;
 int threshold=10000;
 int allow_sep[max_length];
 int allow_com[max_length];
+
+/*后处理用_ tagging*/
+int tag_size=0;
+int** label_looking_for;
+int* is_good_choice;
+
 
 /*初始化一个双数组trie树*/
 void load_da(char* filename,int* &base_array,int* &check_array,int &size){
@@ -193,6 +200,28 @@ void init(
     }
     fclose(fp);
     
+    label_looking_for=new int*[model->l_size];
+    for(int i=0;i<model->l_size;i++)
+        label_looking_for[i]=NULL;
+    for(int i=0;i<model->l_size;i++){
+        if(label_info[i][0]=='0' || label_info[i][0]=='3')continue;
+        
+        for(int j=0;j<=i;j++){
+            if((strcmp(label_info[i]+1,label_info[j]+1)==0)&&(label_info[j][0]=='0')){
+                if(label_looking_for[j]==NULL){
+                    label_looking_for[j]=new int[2];
+                    label_looking_for[j][0]=-1;label_looking_for[j][1]=-1;
+                    tag_size++;
+                }
+                label_looking_for[j][label_info[i][0]-'1']=i;
+                break;
+            }
+        }
+    }
+    //printf("tagsize %d",tag_size);
+    
+
+    
     /**label_trans*/
     if(label_trans){
         load_label_trans(label_trans);
@@ -205,6 +234,9 @@ void init(
         for(int i=0;i<max_length;i++)
             allowed_label_lists[i]=NULL;
     }
+    
+    is_good_choice=new int[max_length*model->l_size];
+    
 }
 void output_sentence(){
     int c;

@@ -126,7 +126,7 @@ if __name__=="__main__":
                             #print(arc)
                             if margin<=threshold:arcs.append(arc)
                         if (1,tag)not in reduced[end]:break
-                        value+=trans[label_ind[(last_i,tag)]][label_ind[(1,tag)]]++reduced[end][(1,tag)][1]
+                        value+=trans[label_ind[(last_i,tag)]][label_ind[(1,tag)]]+reduced[end][(1,tag)][1]
                         last_i=1
                         end+=1
                     pass
