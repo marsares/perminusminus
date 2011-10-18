@@ -238,6 +238,22 @@ void init(
     is_good_choice=new int[max_length*model->l_size];
     
 }
+void output_raw_sentence(){
+    int c;
+    for(int i=0;i<len;i++){
+        c=sequence[i];
+        if(c<128){//1个byte的utf-8
+            putchar(c);
+        }else if(c<0x800){//2个byte的utf-8
+            putchar(0xc0|(c>>6));
+            putchar(0x80|(c&0x3f));
+        }else{//3个byte的utf-8
+            putchar(0xe0|((c>>12)&0x0f));
+            putchar(0x80|((c>>6)&0x3f));
+            putchar(0x80|(c&0x3f));
+        }
+    }
+}
 void output_sentence(){
     int c;
     for(int i=0;i<len;i++){

@@ -4,9 +4,12 @@
 #include <unistd.h>
 #include "sl_decoder.h"
 
+int sl_decoder_show_sentence=0;
+
+
 
 void output_allow_tagging(){
-    threshold=15000;
+    //threshold=15000;
     /*找到score最大值*/
     int max_score=alphas[0].value+betas[0].value-values[0];
     int max_ind=0;
@@ -18,7 +21,7 @@ void output_allow_tagging(){
         }
     }
     //printf("max=%d\n",max_score);
-    printf("\n");
+    //printf("\n");
     /*找出可能的标注序*/
     for(int i=0;i<len*model->l_size;i++)
         is_good_choice[i]=alphas[i].value+betas[i].value-values[i]+threshold>=max_score;
@@ -75,10 +78,17 @@ void output_allow_tagging(){
 void output(){
     put_values();//检索出特征值并初始化放在values数组里
     dp();//动态规划搜索最优解放在result数组里
-    //output_sentence();
     
-    cal_betas();
-    output_allow_tagging();
+    if(threshold==0){
+        output_sentence();
+    }else{
+        if(sl_decoder_show_sentence){
+            output_raw_sentence();
+            printf(" ");
+        }
+        cal_betas();
+        output_allow_tagging();
+    }
 }
 
 void read_stream(){
@@ -125,17 +135,24 @@ void showhelp(){
 }
 
 int main (int argc,char **argv) {
-    //threshold=;
+    threshold=0;
+    
     int c;
     char* label_trans=NULL;
     char* label_lists_file=NULL;
-    while ( (c = getopt(argc, argv, "b:u:h")) != -1) {
+    while ( (c = getopt(argc, argv, "b:u:t:sh")) != -1) {
         switch (c) {
-            case 'b' : 
+            case 'b' : ///label binary的约束
                 label_trans = optarg;
                 break;
-            case 'u' : 
+            case 'u' : ///label unary的约束
                 label_lists_file = optarg;
+                break;
+            case 't' : ///output word lattice
+                threshold = atoi(optarg)*1000;
+                break;
+            case 's':///输出lattice之前输出原句
+                sl_decoder_show_sentence=1;
                 break;
             case 'h' :
             case '?' : 
