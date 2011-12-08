@@ -32,11 +32,11 @@ def eval_sen(g,r,labels,with_tag):
     return len(go),len(re),len(co)
 
 
-def one_pass(with_tag=True):
-    labels=[line.strip().split('/') for line in open('tmp/label_info.txt')]
+def one_pass(filename='tmp/result.txt',label_info='tmp/label_info.txt',with_tag=True):
+    labels=[line.strip().split('/') for line in open(label_info)]
     
         
-    filename='tmp/result.txt'
+    #filename='tmp/result.txt'
     if len(sys.argv)>=2:
         filename=sys.argv[1]
     cache=[]

@@ -1,5 +1,8 @@
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "sl_decoder.h"
-
+int sl_decoder_show_sentence=0;
 
 void output_allow_cws(){
     int max_ind=0;
@@ -60,6 +63,10 @@ void output(){
     if(threshold==0){
         output_sentence();
     }else{
+        if(sl_decoder_show_sentence){
+            output_raw_sentence();
+            printf(" ");
+        }
         cal_betas();
         output_allow_cws();
     }
@@ -104,19 +111,39 @@ void read_stream(){
     }
 }
 
+void showhelp(){
+    printf("Chinese Word Segmenter\n");
+    printf("----Author: Kaixu Zhang @ Tsinghua University\n");
+    printf("arguments:\n");
+    printf("  modelfile indexfile labelfile threshold\n");
+}
+
 int main (int argc,char **argv) {
     if(argc==1){
-        printf("Chinese Word Segmenter\n");
-        printf("----Author: Kaixu Zhang @ Tsinghua University\n");
-        printf("arguments:\n");
-        printf("  modelfile indexfile labelfile threshold\n");
-    }
-    else{
-        threshold=atoi(argv[4])*1000;
-        //printf("%s, %d",argv[4],threshold);
-        init(argv[1],argv[2],argv[3]);
-        read_stream();
+        showhelp();
+        return 0;
     }
     
+    threshold=0;
+    int c;
+    char* label_trans=NULL;
+    char* label_lists_file=NULL;
+    while ( (c = getopt(argc, argv, "t:sh")) != -1) {
+        switch (c) {
+            case 't' : ///output word lattice
+                threshold = atoi(optarg)*1000;
+                break;
+            case 's':///输出lattice之前输出原句
+                sl_decoder_show_sentence=1;
+                break;
+            case 'h' :
+            case '?' : 
+            default : 
+                showhelp();
+                return 1;
+        }
+    }
+    init(argv[optind],argv[optind+1],argv[optind+2]);
+    read_stream();
     return 0;
 }
