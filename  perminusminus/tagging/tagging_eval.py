@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import sys
 def to_set(seq,labels,with_tag):
     offset=0
@@ -32,7 +33,7 @@ def eval_sen(g,r,labels,with_tag):
     return len(go),len(re),len(co)
 
 
-def one_pass(filename='tmp/result.txt',label_info='tmp/label_info.txt',with_tag=True):
+def one_pass(filename='tmp/result.txt',label_info='tmp/label_index.txt',with_tag=True):
     labels=[line.strip().split('/') for line in open(label_info)]
     
         
@@ -58,7 +59,7 @@ def one_pass(filename='tmp/result.txt',label_info='tmp/label_info.txt',with_tag=
     if cache:
         g=[x[0]for x in cache]
         r=[x[1]for x in cache]
-        a,b,c=eval_sen(g,r)
+        a,b,c=eval_sen(g,r,labels,with_tag)
         std+=a
         rst+=b
         cor+=c
@@ -68,5 +69,5 @@ def one_pass(filename='tmp/result.txt',label_info='tmp/label_info.txt',with_tag=
     print("precision: {0}, recall: {1}, F1: {2}".format(p,r,2*p*r/(p+r)))
 
 if __name__=='__main__':
-    one_pass(False)
-    one_pass(True)
+    one_pass(with_tag=False)
+    one_pass(with_tag=True)
