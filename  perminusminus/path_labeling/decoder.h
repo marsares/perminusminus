@@ -15,7 +15,7 @@ struct Node{
 };
 
 /**given prececessors, calculate successors*/
-int* dp_cal_successors(int node_count,Node* nodes){
+inline  int* dp_cal_successors(int node_count,Node* nodes){
     int size=0;
     int* out_degrees=(int*)calloc(sizeof(int),node_count);
     int* p_node_id;
@@ -60,7 +60,7 @@ struct Alpha_Beta{
     int node_id;
     int label_id;
 };
-int alpha_beta_comp(const void* a,const void* b){
+inline  int alpha_beta_comp(const void* a,const void* b){
     return ((Alpha_Beta*)b)->value-((Alpha_Beta*)a)->value;
 }
 /*
