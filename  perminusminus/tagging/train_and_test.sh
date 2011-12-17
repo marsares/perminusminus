@@ -9,11 +9,12 @@
             
 
 
-./transform.py -l -d slex.txt data/training.tag tmp/training.bin tmp/index.txt tmp/label_index.txt
-./transform.py -p -d slex.txt data/test.tag tmp/test.bin tmp/index.txt tmp/label_index.txt
+#./transform.py -l -d slex.txt data/training.tag tmp/training.bin tmp/index.txt tmp/label_index.txt
+#./transform.py -p -d slex.txt data/test.tag tmp/test.bin tmp/index.txt tmp/label_index.txt
 
-../path_labeling/per-- l "tmp/training.bin" "tmp/model.bin" 15
-../path_labeling/per-- p "tmp/model.bin" "tmp/test.bin" "tmp/result.txt" -1
+#../path_labeling/per-- l "tmp/training.bin" "tmp/model.bin" 15
+rm tmp/result.txt
+time ../path_labeling/per-- p "tmp/model.bin" "tmp/test.bin" "tmp/result.txt" -1
 
 #evaluation
 ./tagging_eval.py

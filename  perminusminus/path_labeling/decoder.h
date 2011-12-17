@@ -119,17 +119,15 @@ inline void dp_decode(
         Alpha_Beta* alphas,///alpha value (and the pointer) for i-th node with j-th label
         int* result,
         int** pre_labels=NULL,///每种标签可能的前导标签（以-1结尾）
-        int** allowed_label_lists=NULL///每个字可能的标签列表
+        int** allowed_label_lists=NULL///每个节点可能的标签列表
         ){
-
-    
     //calculate alphas
     int node_id;
     int* p_node_id;
     int* p_pre_label;
-    int* p_allowed_label;
-    int k;
-    int j;
+    int* p_allowed_label;//指向当前字所有可能标签的数组的指针
+    int k;//当前字的前一个节点可能的标签（的编号）
+    int j;//当前字某一个可能的标签（的编号）
     Alpha_Beta* tmp;
     Alpha_Beta best;best.node_id=-1;
     Alpha_Beta* pre_alpha;
@@ -141,39 +139,25 @@ inline void dp_decode(
         
         j=-1;
         while((p_allowed_label?
-                    ((j=(*(p_allowed_label++)))!=-1):
-                    ((++j)!=l_size))){
+                    ((j=(*(p_allowed_label++)))!=-1)://如果有指定，则按照列表来
+                    ((++j)!=l_size))){//否则枚举
             tmp=&alphas[i*l_size+j];
             tmp->value=0;
             p_node_id=nodes[i].predecessors;
             p_pre_label=pre_labels?pre_labels[j]:NULL;
-            while((node_id=*(p_node_id++))>=0){
-                if(p_pre_label){
-                    while((k=(*p_pre_label++))!=-1){
-                        pre_alpha=alphas+node_id*l_size+k;
-                        if(pre_alpha->node_id==-2)continue;//not reachable
-                        if((tmp->node_id<0)){
-                            tmp->value=pre_alpha->value+ll_weights[k*l_size+j];
-                            tmp->node_id=node_id;
-                            tmp->label_id=k;
-                        }else{
-                            score=pre_alpha->value+ll_weights[k*l_size+j];
-                            if(score>tmp->value){
-                                tmp->value=score;
-                                tmp->node_id=node_id;
-                                tmp->label_id=k;
-                            }
-                        }
-                    }
-                }else{
-                    for(k=0;k<l_size;k++){//迭代前面的节点的各种标签
-                        if(alphas[node_id*l_size+k].node_id==-2)continue;//not reachable
-                        score=alphas[node_id*l_size+k].value+ll_weights[k*l_size+j];
-                        if((tmp->node_id<0)||(score>tmp->value)){
-                            tmp->value=score;
-                            tmp->node_id=node_id;
-                            tmp->label_id=k;
-                        }
+            while((node_id=*(p_node_id++))>=0){//枚举前继节点
+                k=-1;
+                while(p_pre_label?
+                        ((k=(*p_pre_label++))!=-1):
+                        ((++k)!=l_size)
+                        ){
+                    pre_alpha=alphas+node_id*l_size+k;
+                    if(pre_alpha->node_id==-2)continue;//not reachable
+                    score=pre_alpha->value+ll_weights[k*l_size+j];
+                    if((tmp->node_id<0)||(score>tmp->value)){
+                        tmp->value=score;
+                        tmp->node_id=node_id;
+                        tmp->label_id=k;
                     }
                 }
             }
@@ -191,8 +175,6 @@ inline void dp_decode(
         }
     }
     //find the path and label the nodes of it.
-    //for(node_id=0;node_id<node_count;node_id++)
-    //    result[node_id]=-1;
     tmp=&best;
     while(tmp->node_id>=0){
         result[tmp->node_id]=tmp->label_id;
@@ -203,18 +185,68 @@ inline void dp_decode(
 
 inline void dp_cal_betas(
         /**something about the model*/
-        int l_size,
-        int* ll_weights,
+        int l_size,///标签个数
+        int* ll_weights,///标签间权重
         /**something about the graph*/
         int node_count,//numbers of nodes
-        Node* nodes,
+        Node* nodes,///节点数据
         //something about the scores
         int* values,//value for i-th node with j-th label
-        Alpha_Beta* betas//alpha value (and the pointer) for i-th node with j-th label
+        Alpha_Beta* betas,//alpha value (and the pointer) for i-th node with j-th label
+        int** post_labels=NULL,///每种标签可能的前导标签（以-1结尾）
+        int** allowed_label_lists=NULL///每个节点可能的标签列表
         ){
-    
     int node_id;
     int* p_node_id;
+    int* p_post_label;
+    int* p_allowed_label;
+    int k;
+    int j;
+    
+    Alpha_Beta* tmp;
+    Alpha_Beta* post_beta;
+    int score=0;
+    
+    for(int i=0;i<node_count*l_size;i++)betas[i].node_id=-2;
+    
+    for(int i=node_count-1;i>=0;i--){//for each node
+        p_allowed_label=allowed_label_lists?allowed_label_lists[i]:NULL;
+        j=-1;
+        while((p_allowed_label?
+                    ((j=(*(p_allowed_label++)))!=-1)://如果有指定，则按照列表来
+                    ((++j)!=l_size))){//否则枚举
+        //for(int j=0;j<l_size;j++){//for each label
+            tmp=&betas[i*l_size+j];
+            tmp->value=0;
+            p_node_id=nodes[i].successors;
+            p_post_label=post_labels?post_labels[j]:NULL;
+            while((node_id=*(p_node_id++))>=0){
+                k=-1;
+                while(p_post_label?
+                        ((k=(*p_post_label++))!=-1):
+                        ((++k)!=l_size)
+                        ){
+                    post_beta=betas+node_id*l_size+k;
+                    if(post_beta->node_id==-2)continue;//not reachable
+                    score=post_beta->value+ll_weights[j*l_size+k];
+                    if((tmp->node_id<0)||(score>tmp->value)){
+                        tmp->value=score;
+                        tmp->node_id=node_id;
+                        tmp->label_id=k;
+                    }
+                }
+            }
+            tmp->value+=values[i*l_size+j];
+            if((nodes[i].type==2)||(nodes[i].type==3))
+                tmp->node_id=-1;
+        }
+    }
+    return;
+    /*
+    int node_id;
+    int* p_node_id;
+    
+    
     Alpha_Beta* tmp;
     int score=0;
     
@@ -240,17 +272,17 @@ inline void dp_cal_betas(
                 tmp->node_id=-1;
         }
     }
-    return;
+    return;*/
 };
 
 
 inline void dp_nb_decode(
         /**something about the model*/
-        int l_size,
-        int* ll_weights,
+        int l_size,///标签个数
+        int* ll_weights,///标签间权重
         /**something about the graph*/
-        int node_count,//numbers of nodes
-        Node* nodes,
+        int node_count,///节点个数
+        Node* nodes,///节点数据
         //something about the scores
         int* values,//value for i-th node with j-th label
         int nb,//n-best

@@ -161,9 +161,9 @@ void load_label_trans(char*filename){
 }
 
 void init(
-        char* model_file,
-        char* dat_file,
-        char* label_file,
+        char* model_file="model.bin",
+        char* dat_file="dat.bin",
+        char* label_file="label.txt",
         char* label_trans=NULL,
         char* label_lists_file=NULL){
     /**模型*/
@@ -354,4 +354,24 @@ void put_values(){
     }
     
 }
+
+
+
+int segment(int* input,int length,int* tags){
+    for(int i=0;i<length;i++){
+        sequence[i]=input[i];
+    }
+    len=length;
+    put_values();//检索出特征值并初始化放在values数组里
+    dp();//动态规划搜索最优解放在result数组里
+    
+    for(int i=0;i<len;i++){
+        if((label_info[result[i]][0]=='0')||(label_info[result[i]][0]=='3')){//分词位置
+            tags[i]=1;
+        }else{
+            tags[i]=0;
+        }
+    }
+}
+
 #endif
