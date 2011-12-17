@@ -1,9 +1,9 @@
 core_headers=decoder.h graph.h model.h scripts.h workbench.h
 
-makeall: libper--.so per--
+makeall: per--
 .PHONY: makeall
 
 libper--.so: libper--.cpp command_line.cpp $(core_headers)
 	g++ -shared -fPIC libper--.cpp -o libper--.so
 per-- : command_line.cpp $(core_headers)
-	g++ -O6 -o per-- command_line.cpp
+	g++ -o per-- command_line.cpp -O3
