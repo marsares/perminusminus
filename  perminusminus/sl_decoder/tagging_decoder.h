@@ -1,12 +1,13 @@
 #ifndef __TAGGING_DECODER_H__
 #define __TAGGING_DECODER_H__
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <string.h>
-#include <time.h>
 
 #include "decoder.h"
 #include "model.h"
+
+namespace daidai{
 
 
 class TaggingDecoder{
@@ -27,13 +28,13 @@ public:
     int* checks;//check数组
 
     ///*模型*/
-    Model* model;
+    permm::Model* model;
 
     ///*解码用*/
-    Node* nodes;//只用来存储解码用的节点的拓扑结构
+    permm::Node* nodes;//只用来存储解码用的节点的拓扑结构
     int* values;
-    Alpha_Beta* alphas;
-    Alpha_Beta* betas;
+    permm::Alpha_Beta* alphas;
+    permm::Alpha_Beta* betas;
     int* result;
     char** label_info;
 
@@ -58,13 +59,14 @@ public:
     
     /*构造函数*/
     TaggingDecoder();
+    ~TaggingDecoder();
     
     /*双数组trie树相关*/
     void load_da(char* filename,int* &base_array,int* &check_array,int &size);
     
     /*初始化*/
     void init(char* model_file,char* dat_file,char* label_file,
-        char* label_trans,char* label_lists_file);
+        char* label_trans=NULL,char* label_lists_file=NULL);
     
     void dp();
     void cal_betas();
@@ -97,6 +99,6 @@ private:
 };
 
 
-
+}
 
 #endif

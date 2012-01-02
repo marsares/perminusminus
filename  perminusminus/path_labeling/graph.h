@@ -1,8 +1,10 @@
 #ifndef __GRAPH_FILE_H__
 #define __GRAPH_FILE_H__
-#include<stdio.h>
-#include<stdlib.h>
+#include<cstdio>
+#include<cstdlib>
 #include"decoder.h"
+
+namespace permm{
 
 /**
  * binary file format for each graph
@@ -108,4 +110,6 @@ struct Graph_Loader{
         return 1;
     };
 };
+
+}
 #endif

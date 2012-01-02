@@ -9,11 +9,14 @@
 extern "C" {
 #endif
 
+using namespace daidai;
+
 void showhelp(){
 }
 
 int main (int argc,char **argv) {
     TaggingDecoder* tagging_decoder=new TaggingDecoder();
+    
     int sl_decoder_show_sentence=0;
     
     tagging_decoder->threshold=0;
@@ -58,7 +61,7 @@ int main (int argc,char **argv) {
         //    printf("%d",tags[i]);
         //}printf("\n");
         if(tagging_decoder->threshold==0){
-            tagging_decoder->output(sl_decoder_show_sentence);
+            tagging_decoder->output_sentence();
         }else{
             if(sl_decoder_show_sentence){
                 tagging_decoder->output_raw_sentence();
@@ -69,6 +72,11 @@ int main (int argc,char **argv) {
         }
         printf("\n");
     }
+    
+    delete[]input;
+    delete[]tags;
+    delete[]label_trans;
+    delete tagging_decoder;
     return 0;
 }
 

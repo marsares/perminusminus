@@ -1,6 +1,8 @@
 #ifndef __CORE_H__
 #define __CORE_H__
-#include<stdio.h>
+#include<cstdio>
+
+namespace permm{
 
 /*the structure of the model, also the file of the model*/
 const int DEC=1000;
@@ -14,13 +16,21 @@ struct Model{
     double* ave_fl_weights;//weights of (feature,label)
     
     
-    Model(int l,int f){
+    Model(int l,int f):ave_ll_weights(NULL),ave_fl_weights(NULL){
         this->l_size=l;
         this->f_size=f;
         this->ll_weights=(int*)calloc(sizeof(int),l*l);
         this->fl_weights=(int*)calloc(sizeof(int),l*f);
         this->ave_ll_weights=(double*)calloc(sizeof(double),l*l);
         this->ave_fl_weights=(double*)calloc(sizeof(double),l*f);
+    }
+    ~Model(){
+        free(this->ll_weights);
+        free(this->fl_weights);
+        
+        free(this->ave_ll_weights);
+        free(this->ave_fl_weights);
+        
     }
     
     void average(int step){
@@ -54,7 +64,7 @@ struct Model{
         }
     }
     
-    Model(char* filename){
+    Model(char* filename):ave_ll_weights(NULL),ave_fl_weights(NULL){
         FILE* pFile;
         int rtn_value;
         pFile=fopen(filename,"rb");
@@ -83,17 +93,10 @@ struct Model{
         fwrite((this->fl_weights),4,l_size*f_size,pFile);
         fclose(pFile);
     }
-    ~Model(){
-        free(this->ll_weights);
-        free(this->fl_weights);
-        if((this->ave_ll_weights)!=NULL){
-            free(this->ave_ll_weights);
-            free(this->ave_fl_weights);
-        }
-    }
+    
     
 };
 
 
-
+}
 #endif

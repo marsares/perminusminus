@@ -1,11 +1,13 @@
 #ifndef __SCRIPTS_H__
 #define __SCRIPTS_H__
 
-#include<stdio.h>
-#include<stdlib.h>
+#include<cstdio>
+#include<cstdlib>
 
 #include "model.h"
 #include"workbench.h"
+
+namespace permm{
 
 /**
 three high level scripts
@@ -145,5 +147,6 @@ void train(char* trainingfile,char* modelfile,int iterations,char* bigram_file=N
     model->save(modelfile);
 }
 
+}
 #endif
 

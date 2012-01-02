@@ -1,13 +1,15 @@
-#include "tagging_decoder.h"
 #include <list>
+#include "tagging_decoder.h"
 
-
+namespace daidai{
 
 int TaggingDecoder::segment(int* input,int length,int* tags){
+    if(not length)return 0;
     for(int i=0;i<length;i++){
         sequence[i]=input[i];
     }
     len=length;
+    
     put_values();//检索出特征值并初始化放在values数组里
     dp();//动态规划搜索最优解放在result数组里
     
@@ -29,18 +31,77 @@ TaggingDecoder::TaggingDecoder(){
     this->uni_bases=new int[this->max_length+2];
     this->bi_bases=new int[this->max_length+4];
     
-    nodes=new Node[this->max_length];
+    bases=NULL;checks=NULL;
+    
+    nodes=new permm::Node[this->max_length];
     
     this->char_label_map=new int[65536];
     this->allowed_labels=NULL;
     this->label_trans=NULL;
+    label_trans_pre=NULL;
+    label_trans_post=NULL;
     this->threshold=10000;
     
     this->allow_sep=new int[this->max_length];
     this->allow_com=new int[this->max_length];
     
     this->tag_size=0;
+    //this->is_good_choice=NULL;
+    
+    this->model=NULL;
+    
+    alphas=NULL;
+    betas=NULL;
 }
+TaggingDecoder::~TaggingDecoder(){
+    delete[]sequence;
+    delete[]allowed_label_lists;
+    
+    delete[](uni_bases);
+    delete[](bi_bases);
+    
+
+    free(bases);
+    free(checks);
+    
+    for(int i=0;i<max_length;i++){
+        delete[](nodes[i].predecessors);
+        delete[](nodes[i].successors);
+    }
+    delete[](nodes);
+    free(values);
+    free(alphas);
+    free(betas);
+    free(result);
+    if(model!=NULL)for(int i=0;i<model->l_size;i++){
+        if(label_info)delete[](label_info[i]);
+    };
+    delete[](label_info);
+    
+        
+    delete[](char_label_map);
+    free(allowed_labels);
+    
+    free(label_trans);
+    if(model!=NULL)for(int i=0;i<model->l_size;i++){
+        if(label_trans_pre)free(label_trans_pre[i]);
+        if(label_trans_post)free(label_trans_post[i]);
+    }
+    free(label_trans_pre);
+    free(label_trans_post);
+    
+    delete[](allow_sep);
+    delete[](allow_com);
+    
+    if(model!=NULL)for(int i=0;i<model->l_size;i++){
+        if(label_looking_for)delete[](label_looking_for[i]);
+    };
+    delete[](label_looking_for);
+    delete[](is_good_choice);
+    
+    if(model!=NULL)delete model;
+}
+
 /*初始化一个双数组trie树*/
 void TaggingDecoder::load_da(char* filename,int* &base_array,int* &check_array,int &size){
     //打开文件
@@ -63,15 +124,15 @@ void TaggingDecoder::init(
         char* model_file="model.bin",
         char* dat_file="dat.bin",
         char* label_file="label.txt",
-        char* label_trans=NULL,
-        char* label_lists_file=NULL){
+        char* label_trans,
+        char* label_lists_file){
     /**模型*/
-    model=new Model(model_file);
+    model=new permm::Model(model_file);
     
     /**解码用*/
     values=(int*)calloc(sizeof(int),max_length*model->l_size);
-    alphas=(Alpha_Beta*)calloc(sizeof(Alpha_Beta),max_length*model->l_size);
-    betas=(Alpha_Beta*)calloc(sizeof(Alpha_Beta),max_length*model->l_size);
+    alphas=(permm::Alpha_Beta*)calloc(sizeof(permm::Alpha_Beta),max_length*model->l_size);
+    betas=(permm::Alpha_Beta*)calloc(sizeof(permm::Alpha_Beta),max_length*model->l_size);
     result=(int*)calloc(sizeof(int),max_length*model->l_size);
     label_info=new char*[model->l_size];
     
@@ -97,6 +158,7 @@ void TaggingDecoder::init(
         str=new char[16];
         ind++;
     }
+    delete[]str;
     fclose(fp);
     
     label_looking_for=new int*[model->l_size];
@@ -148,6 +210,7 @@ inline void TaggingDecoder::find_bases(int*bases,int*checks,int dat_size,int ch1
         bi_base=-1;return;
     }
     bi_base=bases[ind]+32;
+    
 }
 void TaggingDecoder::dp(){
     dp_decode(
@@ -305,6 +368,7 @@ inline void TaggingDecoder::add_values(int *value_offset,int base,int del,int* p
     }
 }
 void TaggingDecoder::put_values(){
+    if(!len)return;
     /*nodes*/
     for(int i=0;i<len;i++){
         nodes[i].type=0;
@@ -314,7 +378,6 @@ void TaggingDecoder::put_values(){
     
     ///allowed_label_lists
     if(allowed_labels){
-        
         for(int i=0;i<len;i++){
             if(char_label_map[sequence[i]]==-1){
                 allowed_label_lists[i]=NULL;
@@ -514,7 +577,7 @@ int TaggingDecoder::get_input_from_stream(int*input,int max_length,int& length){
                 }
                 putchar(c);
             }else{//一般ascii字符
-                input[length++]=c;//+65248;//半角转全角，放入缓存
+                input[length++]=c+65248;//半角转全角，放入缓存
             }
         }else if(!(c&0x20)){//2个byte的utf-8编码
             input[length++]=((c&0x1f)<<6)|
@@ -528,3 +591,5 @@ int TaggingDecoder::get_input_from_stream(int*input,int max_length,int& length){
         }
     }
 };
+
+}

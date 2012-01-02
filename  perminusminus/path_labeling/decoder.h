@@ -1,7 +1,8 @@
 #ifndef __DP_H__
 #define __DP_H__
-#include<stdlib.h>
+#include<cstdlib>
 
+namespace permm{
 
 
 /**
@@ -14,45 +15,8 @@ struct Node{
     int* successors;///ends with a -1
 };
 
-/**given prececessors, calculate successors*/
-inline  int* dp_cal_successors(int node_count,Node* nodes){
-    int size=0;
-    int* out_degrees=(int*)calloc(sizeof(int),node_count);
-    int* p_node_id;
-    int node_id;
-    for(int i=0;i<node_count;i++){
-        p_node_id=nodes[i].predecessors;
-        while((node_id=*(p_node_id++))>=0){
-            out_degrees[node_id]++;
-        }
-    }
-    for(int i=0;i<node_count;i++){
-        node_id=out_degrees[i]+1;
-        out_degrees[i]=size;
-        size+=node_id;
-    }
-    int*buffer=(int*)malloc(sizeof(int)*size);
-    for(int i=0;i<size;i++)buffer[i]=-1;
-    
-    //for(int i=0;i<size;i++)printf("%d ",buffer[i]);
-    //printf("\n");
-    
-    for(int i=0;i<node_count;i++){
-        nodes[i].successors=buffer+out_degrees[i];
-        out_degrees[i]=0;
-    }
-    for(int i=0;i<node_count;i++){
-        p_node_id=nodes[i].predecessors;
-        while((node_id=*(p_node_id++))>=0){
-            nodes[node_id].successors[out_degrees[node_id]++]=i;
-        }
-    }
-    //for(int i=0;i<size;i++)printf("%d ",buffer[i]);
-    //printf("\n");
-    //getchar();
-    free(out_degrees);
-    return buffer;
-};
+///**given prececessors, calculate successors*/
+//int* dp_cal_successors(int node_count,Node* nodes);
 
 //a structure for alphas and betas
 struct Alpha_Beta{
@@ -60,9 +24,11 @@ struct Alpha_Beta{
     int node_id;
     int label_id;
 };
-inline  int alpha_beta_comp(const void* a,const void* b){
+
+inline int alpha_beta_comp(const void* a,const void* b){
     return ((Alpha_Beta*)b)->value-((Alpha_Beta*)a)->value;
-}
+};
+
 /*
 the n-best heap for the n-best searching
 This is a min-heap
@@ -108,6 +74,7 @@ inline void nb_heap_insert(Alpha_Beta* heap,int max_size,int& count,Alpha_Beta& 
         heap[ind]=element;
     }
 };
+
 
 /** The DP algorithm(s) for path labeling */
 inline void dp_decode(
@@ -182,6 +149,7 @@ inline void dp_decode(
     }
     return;
 };
+
 
 inline void dp_cal_betas(
         /**something about the model*/
@@ -356,4 +324,46 @@ inline void dp_nb_decode(
     return;
 };
 
+/**given prececessors, calculate successors*/
+inline int* dp_cal_successors(int node_count,Node* nodes){
+    int size=0;
+    int* out_degrees=(int*)calloc(sizeof(int),node_count);
+    int* p_node_id;
+    int node_id;
+    for(int i=0;i<node_count;i++){
+        p_node_id=nodes[i].predecessors;
+        while((node_id=*(p_node_id++))>=0){
+            out_degrees[node_id]++;
+        }
+    }
+    for(int i=0;i<node_count;i++){
+        node_id=out_degrees[i]+1;
+        out_degrees[i]=size;
+        size+=node_id;
+    }
+    int*buffer=(int*)malloc(sizeof(int)*size);
+    for(int i=0;i<size;i++)buffer[i]=-1;
+    
+    //for(int i=0;i<size;i++)printf("%d ",buffer[i]);
+    //printf("\n");
+    
+    for(int i=0;i<node_count;i++){
+        nodes[i].successors=buffer+out_degrees[i];
+        out_degrees[i]=0;
+    }
+    for(int i=0;i<node_count;i++){
+        p_node_id=nodes[i].predecessors;
+        while((node_id=*(p_node_id++))>=0){
+            nodes[node_id].successors[out_degrees[node_id]++]=i;
+        }
+    }
+    //for(int i=0;i<size;i++)printf("%d ",buffer[i]);
+    //printf("\n");
+    //getchar();
+    free(out_degrees);
+    return buffer;
+};
+
+
+}
 #endif

@@ -1,7 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <unistd.h>
 #include "scripts.h"
+
+using namespace permm;
 
 void showhelp(){
     printf("per-- toolkit\n");
@@ -69,3 +71,6 @@ int main(int argc, char **argv){
     return 0;
 
 }
+
+
+

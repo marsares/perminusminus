@@ -5,6 +5,8 @@ import json_to_binary
 import indexer
 import getopt
 
+tag_map={'X':'FW','VP':'PU','NP':'NN',
+        }
 
 def _to_tags(postags,sen,lid):
     tags=[]

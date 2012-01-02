@@ -1,11 +1,11 @@
 #ifndef __PATH_LABELING_H__
 #define __PATH_LABELING_H__
-#include<stdlib.h>
+#include<cstdlib>
 #include "model.h"
 #include"decoder.h"
 #include"graph.h"
 
-
+namespace permm{
 
 
 struct PERMM{
@@ -255,7 +255,7 @@ struct PERMM{
     }
 };
 
-
+}
 
 
 #endif
