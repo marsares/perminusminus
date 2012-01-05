@@ -86,6 +86,12 @@ struct PERMM{
         this->betas=(Alpha_Beta*)calloc(sizeof(Alpha_Beta),n_best*length*this->model->l_size);
         
     }
+    ~PERMM(){
+        free(values);
+        free(result);
+        free(alphas);
+        free(betas);
+    }
     void add_values(Graph* graph){
         int* p=graph->features;
         int fid=0;

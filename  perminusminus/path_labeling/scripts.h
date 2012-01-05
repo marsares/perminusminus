@@ -145,6 +145,8 @@ void train(char* trainingfile,char* modelfile,int iterations,char* bigram_file=N
     }
     model->average(permm.steps);
     model->save(modelfile);
+    delete model;
+    delete gl;
 }
 
 }

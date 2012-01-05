@@ -72,8 +72,11 @@ struct Graph_Loader{
         //    graphs=NULL;
         //    graphs=(Graph**)realloc(graphs,sizeof(Graph)*max_g_size);
         //}
+        //fclose(this->pFile);
     };
-    
+    ~Graph_Loader(){
+        fclose(this->pFile);
+    }
     /**
      * 在文件中读如data_size这么长的数据当作graph
      * */

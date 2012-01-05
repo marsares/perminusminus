@@ -93,9 +93,9 @@ inline void dp_decode(
     int* p_node_id;
     int* p_pre_label;
     int* p_allowed_label;//指向当前字所有可能标签的数组的指针
-    int k;//当前字的前一个节点可能的标签（的编号）
-    int j;//当前字某一个可能的标签（的编号）
-    Alpha_Beta* tmp;
+    register int k;//当前字的前一个节点可能的标签（的编号）
+    register int j;//当前字某一个可能的标签（的编号）
+    register Alpha_Beta* tmp;
     Alpha_Beta best;best.node_id=-1;
     Alpha_Beta* pre_alpha;
     int score;
