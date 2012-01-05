@@ -3,30 +3,14 @@
 
 namespace daidai{
 
-int TaggingDecoder::segment(int* input,int length,int* tags){
-    if(not length)return 0;
-    for(int i=0;i<length;i++){
-        sequence[i]=input[i];
-    }
-    len=length;
-    
-    put_values();//检索出特征值并初始化放在values数组里
-    dp();//动态规划搜索最优解放在result数组里
-    
-    for(int i=0;i<len;i++){
-        if((label_info[result[i]][0]=='0')||(label_info[result[i]][0]=='3')){//分词位置
-            tags[i]=1;
-        }else{
-            tags[i]=0;
-        }
-    }
-}
+
 
 TaggingDecoder::TaggingDecoder(){
     this->max_length=10000;
     this->len=0;
     this->sequence=new int[this->max_length];
     this->allowed_label_lists=new int*[this->max_length];
+    pocs_to_tags=NULL;
     
     this->uni_bases=new int[this->max_length+2];
     this->bi_bases=new int[this->max_length+4];
@@ -52,6 +36,7 @@ TaggingDecoder::TaggingDecoder(){
     
     alphas=NULL;
     betas=NULL;
+    
 }
 TaggingDecoder::~TaggingDecoder(){
     delete[]sequence;
@@ -98,6 +83,13 @@ TaggingDecoder::~TaggingDecoder(){
     };
     delete[](label_looking_for);
     delete[](is_good_choice);
+    
+    if(pocs_to_tags){
+        for(int i=1;i<16;i++){
+            delete[]pocs_to_tags[i];
+        }
+    }
+    delete[]pocs_to_tags;
     
     if(model!=NULL)delete model;
 }
@@ -149,17 +141,37 @@ void TaggingDecoder::init(
     };
     load_da(dat_file,bases,checks,dat_size);
     
+    std::list<int> poc_tags[16];
     char* str=new char[16];
     FILE *fp;
     fp = fopen(label_file, "r");
     int ind=0;
     while( fscanf(fp, "%s", str)==1){
         label_info[ind]=str;
+        int seg_ind=str[0]-'0';
+        for(int j=0;j<16;j++){
+            if((1<<seg_ind)&(j)){
+                poc_tags[j].push_back(ind);
+            }
+        }
         str=new char[16];
         ind++;
     }
     delete[]str;
     fclose(fp);
+    
+    /*pocs_to_tags*/
+    pocs_to_tags=new int*[16];
+    for(int j=1;j<16;j++){
+        pocs_to_tags[j]=new int[(int)poc_tags[j].size()+1];
+        int k=0;
+        for(std::list<int>::iterator plist = poc_tags[j].begin();
+                plist != poc_tags[j].end(); plist++){
+            pocs_to_tags[j][k++]=*plist;
+        };
+        pocs_to_tags[j][k]=-1;
+    }
+    
     
     label_looking_for=new int*[model->l_size];
     for(int i=0;i<model->l_size;i++)
@@ -591,5 +603,84 @@ int TaggingDecoder::get_input_from_stream(int*input,int max_length,int& length){
         }
     }
 };
+
+
+int TaggingDecoder::segment(int* input,int length,int* tags){
+    if(not length)return 0;
+    for(int i=0;i<length;i++){
+        sequence[i]=input[i];
+    }
+    len=length;
+    
+    put_values();//检索出特征值并初始化放在values数组里
+    dp();//动态规划搜索最优解放在result数组里
+    
+    for(int i=0;i<len;i++){
+        if((label_info[result[i]][0]=='0')||(label_info[result[i]][0]=='3')){//分词位置
+            tags[i]=1;
+        }else{
+            tags[i]=0;
+        }
+    }
+}
+
+int TaggingDecoder::segment(RawSentence& raw,SegmentedSentence& segged){
+    segged.clear();
+    if(raw.size()==0)return 0;
+    for(int i=0;i<(int)raw.size();i++){
+        sequence[i]=raw[i];
+    }
+    len=(int)raw.size();
+    put_values();//检索出特征值并初始化放在values数组里
+    dp();//动态规划搜索最优解放在result数组里
+    for(int i=0;i<len;i++){
+        if((i==0)||(label_info[result[i]][0]=='0')||(label_info[result[i]][0]=='3')){
+            segged.push_back(Word());
+        }
+        segged.back().push_back(raw[i]);
+    }
+}
+
+int TaggingDecoder::segment(RawSentence& raw,
+        POCGraph&old_graph,
+        SegmentedSentence& segged){
+    for(int i=0;i<(int)raw.size();i++){
+        int pocs=0;
+        for(int j=0;j<(int)old_graph[i].size();j++){
+            pocs+=1<<(old_graph[i][j]);
+        }
+        if(pocs){
+            allowed_label_lists[i]=pocs_to_tags[pocs];
+        }else{
+            allowed_label_lists[i]=pocs_to_tags[15];
+        }
+    }
+    segment(raw,segged);
+    for(int i=0;i<(int)raw.size();i++){
+        allowed_label_lists[i]=NULL;
+    }
+}
+
+int TaggingDecoder::segment(RawSentence&raw,
+        POCGraph&new_graph){
+    if(raw.size()==0)return 0;
+    for(int i=0;i<(int)raw.size();i++){
+        sequence[i]=raw[i];
+    }
+    len=(int)raw.size();
+    put_values();//检索出特征值并初始化放在values数组里
+    dp();//动态规划搜索最优解放在result数组里
+    cal_betas();
+    find_good_choice();
+    new_graph.clear();
+    for(int i=0;i<len;i++){
+        new_graph.push_back(std::vector<POC>());
+        for(int j=0;j<model->l_size;j++){
+            if(is_good_choice[i*model->l_size+j])
+                new_graph.back().push_back((POC)j);
+        }
+    }
+};
+
 
 }

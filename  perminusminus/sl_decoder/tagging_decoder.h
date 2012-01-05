@@ -3,9 +3,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string.h>
-
-#include "decoder.h"
-#include "model.h"
+#include "../base/daidai_base.h"
+#include "../path_labeling/decoder.h"
+#include "../path_labeling/model.h"
 
 namespace daidai{
 
@@ -17,6 +17,7 @@ public:
     int len;//句子长度
     int* sequence;//句子
     int** allowed_label_lists;///
+    int** pocs_to_tags;///
 
     ///*特征、双数组相关*/
     int* uni_bases;
@@ -72,8 +73,11 @@ public:
     void cal_betas();
     void put_values();
     
-    
+    /*切分*/
     int segment(int* input,int length,int* tags);
+    int segment(RawSentence&,SegmentedSentence&);
+    int segment(RawSentence&,POCGraph&,SegmentedSentence&);
+    int segment(RawSentence&,POCGraph&);
     
     void find_good_choice();
     

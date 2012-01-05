@@ -1,6 +1,6 @@
 
 
-sl_decoder: sl_decoder.cpp ../path_labeling/decoder.h
+sl_decoder: sl_decoder.cpp ../path_labeling/decoder.h ../base/daidai_base.h
 	g++ -c sl_decoder.cpp -o sl_decoder.o -O3 -I ../path_labeling
 	g++ -c tagging_decoder.cpp -o tagging_decoder.o -O3 -I ../path_labeling
 	g++ -o sl_decoder sl_decoder.o tagging_decoder.o
@@ -31,3 +31,9 @@ lib:
 	g++ -g -c tagging_decoder.cpp -o tagging_decoder.o -O3 -fPIC -I ../path_labeling
 	g++ -g -fPIC -shared lib_decoder.o tagging_decoder.o -o libcws.so
 	valgrind --track-origins=yes --num-callers=10 --tool=memcheck --leak-check=full ./testcwslib.py
+
+poc:
+	g++ -g -c tagging_decoder.cpp -o tagging_decoder.o -O3
+	g++ -g -c poc_sequencer.cpp -o poc_sequencer.o -O3
+	g++ -g -o poc_sequencer poc_sequencer.o tagging_decoder.o
+	echo '背景？我没去过背景啊！' | ./poc_sequencer
