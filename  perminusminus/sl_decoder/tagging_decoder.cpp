@@ -12,9 +12,11 @@ TaggingDecoder::TaggingDecoder(){
     this->allowed_label_lists=new int*[this->max_length];
     pocs_to_tags=NULL;
     
+    dat=NULL;
     this->uni_bases=new int[this->max_length+2];
     this->bi_bases=new int[this->max_length+4];
     
+    is_old_type_dat=false;
     bases=NULL;checks=NULL;
     
     nodes=new permm::Node[this->max_length];
@@ -95,19 +97,34 @@ TaggingDecoder::~TaggingDecoder(){
 }
 
 /*初始化一个双数组trie树*/
-void TaggingDecoder::load_da(char* filename,int* &base_array,int* &check_array,int &size){
+void TaggingDecoder::load_da(char* filename,int &size){
     //打开文件
     FILE * pFile=fopen ( filename , "rb" );
     /*得到文件大小*/
     fseek (pFile , 0 , SEEK_END);
-    size=ftell (pFile)/sizeof(int)/2;//双数组大小
+    size=ftell (pFile)/sizeof(DATEntry);//双数组大小
     rewind (pFile);//重置文件指针到开头
-    /*前一半是base数组，后一半是check数组*/
-    base_array=(int*) malloc (sizeof(int)*size);
-    check_array=(int*) malloc (sizeof(int)*size);
-    int rtn=fread (base_array,sizeof(int),size,pFile);
-    rtn=fread (check_array,sizeof(int),size,pFile);
-    //关闭文件
+    int rtn=0;
+    if(is_old_type_dat){
+        dat=(DATEntry*)malloc(sizeof(DATEntry)*size);
+        int* bases=NULL;
+        int* checks=NULL;
+        bases=(int*) malloc (sizeof(int)*size);
+        checks=(int*) malloc (sizeof(int)*size);
+        rtn=fread (bases,sizeof(int),size,pFile);
+        rtn=fread (checks,sizeof(int),size,pFile);
+        for(int i=0;i<size;i++){
+            dat[i].base=bases[i];
+            dat[i].check=checks[i];
+        }
+        free(bases);
+        free(checks);
+
+    }else{
+        dat=(DATEntry*)malloc(sizeof(DATEntry)*size);
+        rtn=fread (dat,sizeof(DATEntry),size,pFile);
+    }
+        //关闭文件
     fclose (pFile);
 };
 
@@ -139,7 +156,7 @@ void TaggingDecoder::init(
         pr[1]=-1;
         nodes[i].successors=pr;
     };
-    load_da(dat_file,bases,checks,dat_size);
+    load_da(dat_file,dat_size);
     
     std::list<int> poc_tags[16];
     char* str=new char[16];
@@ -212,16 +229,16 @@ void TaggingDecoder::init(
     
 }
 
-inline void TaggingDecoder::find_bases(int*bases,int*checks,int dat_size,int ch1,int ch2,int& uni_base,int&bi_base){
-    if(checks[ch1]){
+inline void TaggingDecoder::find_bases(int dat_size,int ch1,int ch2,int& uni_base,int&bi_base){
+    if(dat[ch1].check){
         uni_base=-1;bi_base=-1;return;
     }
-    uni_base=bases[ch1]+32;
-    int ind=bases[ch1]+ch2;
-    if(ind>=dat_size||checks[ind]!=ch1){
+    uni_base=dat[ch1].base+32;
+    int ind=dat[ch1].base+ch2;
+    if(ind>=dat_size||dat[ind].check!=ch1){
         bi_base=-1;return;
     }
-    bi_base=bases[ind]+32;
+    bi_base=dat[ind].base+32;
     
 }
 void TaggingDecoder::dp(){
@@ -354,11 +371,11 @@ void TaggingDecoder::load_label_trans(char*filename){
 
 
 inline void TaggingDecoder::add_values(int *value_offset,int base,int del,int* p_allowed_label=NULL){
-    int ind=bases[base]+del;
-    if(ind>=dat_size||checks[ind]!=base){
+    int ind=dat[base].base+del;
+    if(ind>=dat_size||dat[ind].check!=base){
         return;
     }
-    int offset=bases[bases[base]+del];
+    int offset=dat[dat[base].base+del].base;
     int* weight_offset=model->fl_weights+offset*model->l_size;
     //p_allowed_label=NULL;
     int allowed_label;
@@ -402,12 +419,12 @@ void TaggingDecoder::put_values(){
     for(int i=0;i<len*model->l_size;i++){
         values[i]=0;
     }
-    find_bases(bases,checks,dat_size,35,35,uni_bases[0],bi_bases[0]);
-    find_bases(bases,checks,dat_size,35,sequence[0],uni_bases[0],bi_bases[1]);
+    find_bases(dat_size,35,35,uni_bases[0],bi_bases[0]);
+    find_bases(dat_size,35,sequence[0],uni_bases[0],bi_bases[1]);
     for(int i=0;i+1<len;i++)
-        find_bases(bases,checks,dat_size,sequence[i],sequence[i+1],uni_bases[i+1],bi_bases[i+2]);
-    find_bases(bases,checks,dat_size,sequence[len-1],35,uni_bases[len],bi_bases[len+1]);
-    find_bases(bases,checks,dat_size,35,35,uni_bases[len+1],bi_bases[len+2]);
+        find_bases(dat_size,sequence[i],sequence[i+1],uni_bases[i+1],bi_bases[i+2]);
+    find_bases(dat_size,sequence[len-1],35,uni_bases[len],bi_bases[len+1]);
+    find_bases(dat_size,35,35,uni_bases[len+1],bi_bases[len+2]);
     
     int base=0;
     for(int i=0;i<len;i++){

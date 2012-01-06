@@ -24,8 +24,11 @@ int main (int argc,char **argv) {
     int c;
     char* label_trans=NULL;
     char* label_lists_file=NULL;
-    while ( (c = getopt(argc, argv, "b:u:t:sh")) != -1) {
+    int is_old_type_dat=false;
+    while ( (c = getopt(argc, argv, "b:u:t:shD")) != -1) {
         switch (c) {
+            case 'D' : ///old type的DAT树
+                is_old_type_dat=true;
             case 'b' : ///label binary的约束
                 label_trans = optarg;
                 break;
@@ -46,6 +49,7 @@ int main (int argc,char **argv) {
         }
     }
     
+    tagging_decoder->is_old_type_dat=is_old_type_dat;
     tagging_decoder->init(argv[optind],argv[optind+1],argv[optind+2],label_trans,label_lists_file);
 
     //read_stream();

@@ -12,8 +12,8 @@ test: dat_builder dat
 	./dat dat.bin
 
 clear:
-	rm dat_builder
-	rm dat
+	rm dat_builder -f
+	rm dat -f
 
 old: dat_builder
 	./dat_builder dat.bin -s -P -l ./doublelist/lex2.txt

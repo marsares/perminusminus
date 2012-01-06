@@ -2,6 +2,7 @@
 #include<cstdlib>
 #include<vector>
 #include<cstdio>
+#include<iostream>
 #include"../base/daidai_base.h"
 class DAT{
 public:
@@ -133,7 +134,7 @@ public:
         }else{
             dat[-dat[ind].check].base=dat[ind].base;
         };
-        dat[ind].check=250;
+        dat[ind].check=ind;
         //printf("%d used\n",ind);
         //print();
     };
@@ -162,8 +163,33 @@ public:
      * */
     int alloc(std::vector<int>& offsets){
         size_t size=offsets.size();
-        //for(int i=0;i<size;i++)printf("%d ",offsets[i]); 
-        //printf(" ]] end of offsets \n");
+        
+        ////忽略已经存在的不太连续的空位
+        //int slots=4;
+        //int new_head=-head;
+        //while(new_head!=dat_size){
+            //int p=new_head;
+            ////std::cout<<head<<" "<<new_head<<"\n";
+            //while(p!=dat_size){
+                //if(dat[p].check>=0)printf("wrong!!!\n");
+                //if((-dat[p].check)!=(p+1))break;
+                //if((p-(new_head))>=slots)break;
+                //p=-dat[p].check;
+            //}
+            ////std::cout<<p<<"\n";
+            //if(p==dat_size)break;
+            //if((p-(new_head))<slots){
+                //int tmp=-dat[p].check;
+                //for(int i=new_head;i<=p;i++)
+                    //use(i);
+                //new_head=tmp;
+                //continue;
+            //}else{
+                //break;
+            //}
+        //}
+        ////std::cout<<head<<" "<<new_head<<"\n";
+        
         register size_t base=-head;
         while(1){
             if(base==dat_size)extends();
@@ -241,12 +267,6 @@ public:
                 
                 gen_children(lexicon,i,prefix,children);
                 int base=assign(p_base,children,offset==(int)word.size());
-                /*if(offset==(int)word.size()){
-                    dat[base].base=lexicon[i].value;
-                }
-                if((offset==(int)word.size())&&(no_prefix)){
-                    dat[p_base].base=lexicon[i].value;
-                }*/
             }
             off=-get_info(word);
             if(no_prefix){

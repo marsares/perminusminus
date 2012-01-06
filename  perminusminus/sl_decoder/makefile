@@ -1,9 +1,15 @@
 
 
-sl_decoder: sl_decoder.cpp ../path_labeling/decoder.h ../base/daidai_base.h
+sl_decoder: tagging_decoder.cpp tagging_decoder.h sl_decoder.cpp ../path_labeling/decoder.h ../base/daidai_base.h
 	g++ -c sl_decoder.cpp -o sl_decoder.o -O3 -I ../path_labeling
 	g++ -c tagging_decoder.cpp -o tagging_decoder.o -O3 -I ../path_labeling
 	g++ -o sl_decoder sl_decoder.o tagging_decoder.o
+
+sl_decoder2: tagging_decoder_old.cpp tagging_decoder.h sl_decoder.cpp ../path_labeling/decoder.h ../base/daidai_base.h
+	g++ -c sl_decoder.cpp -o sl_decoder.o -O3 -I ../path_labeling
+	g++ -c tagging_decoder_old.cpp -o tagging_decoder.o -O3 -I ../path_labeling
+	g++ -o sl_decoder sl_decoder.o tagging_decoder.o
+
 
 
 dagger:

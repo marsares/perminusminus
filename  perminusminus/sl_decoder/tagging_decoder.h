@@ -20,11 +20,17 @@ public:
     int** pocs_to_tags;///
 
     ///*特征、双数组相关*/
+    struct DATEntry{
+        int base;
+        int check;
+    };
     int* uni_bases;
     int* bi_bases;
 
     ///*双数组*/
+    int is_old_type_dat;
     int dat_size;//双数组大小
+    DATEntry* dat;
     int* bases;//base数组
     int* checks;//check数组
 
@@ -63,7 +69,7 @@ public:
     ~TaggingDecoder();
     
     /*双数组trie树相关*/
-    void load_da(char* filename,int* &base_array,int* &check_array,int &size);
+    void load_da(char* filename,int &size);
     
     /*初始化*/
     void init(char* model_file,char* dat_file,char* label_file,
@@ -92,7 +98,7 @@ public:
     void set_label_trans();
 private:
     /*双数组trie树相关*/
-    inline void find_bases(int*bases,int*checks,int dat_size,int ch1,int ch2,int& uni_base,int&bi_base);
+    inline void find_bases(int dat_size,int ch1,int ch2,int& uni_base,int&bi_base);
 
     inline void add_values(int *value_offset,int base,int del,int* p_allowed_label);
 
