@@ -100,23 +100,18 @@ void TaggingLearner::train(const char*training_file,
             for(int j=0;j<word.size();j++)raw.push_back(word[j]);
             
             if(word.size()==1){
-                get_char_tag('3',tag);
+                get_char_tag(kPOC_S,tag);
             }else{
-                get_char_tag('0',tag);
+                get_char_tag(kPOC_B,tag);
                 if(word.size()>2){
-                    get_char_tag('1',tag);
+                    get_char_tag(kPOC_M,tag);
                 }
-                get_char_tag('2',tag);
+                get_char_tag(kPOC_E,tag);
             }
         }
-        if(bigram_threshold>1){
-            for(int i=0;i<raw.size()-1;i++){
-                bigram.clear();
-                bigram.push_back(raw[i]);bigram.push_back(raw[i+1]);
-                bigram_counter.update(bigram);
-            }
-        }
-        ngram_feature.feature_generation(raw,ngram_indexer);
+        ngram_feature.feature_generation(raw,ngram_indexer,
+                    (bigram_threshold>1)?(&bigram_counter):(NULL));
+        
         
     }
     delete tfl;
@@ -130,12 +125,10 @@ void TaggingLearner::train(const char*training_file,
         const Word& feature_raw=ngram_indexer.list[i];
         //filter some bigrams
         if((bigram_threshold>1)&&(feature_raw.size()>=2)){
-            if((feature_raw[0]!=' ')&&(feature_raw[1]!=' ')
-                    &&(feature_raw[0]!='#')&&(feature_raw[1]!='#')){
+            if((feature_raw[0]!=' ')&&(feature_raw[1]!=' ')){
                 bigram.clear();
                 bigram.push_back(feature_raw[0]);bigram.push_back(feature_raw[1]);
                 if(bigram_counter[bigram]<bigram_threshold){
-                    //put_character(bigram[0]);put_character(bigram[1]);putchar('\n');
                     continue;
                 }
             }
@@ -207,14 +200,14 @@ void TaggingLearner::train(const char*training_file,
                     
                     this->sequence[len]=word[j];
                     if(word.size()==1){
-                        gold_standard[len]=get_char_tag('3',tag);
+                        gold_standard[len]=get_char_tag(kPOC_S,tag);
                     }else{
                         if(j==0){
-                            gold_standard[len]=get_char_tag('0',tag);
+                            gold_standard[len]=get_char_tag(kPOC_B,tag);
                         }else if((j+1)==word.size()){
-                            gold_standard[len]=get_char_tag('2',tag);
+                            gold_standard[len]=get_char_tag(kPOC_E,tag);
                         }else{
-                            gold_standard[len]=get_char_tag('1',tag);
+                            gold_standard[len]=get_char_tag(kPOC_M,tag);
                         }
                     }
                     len++;

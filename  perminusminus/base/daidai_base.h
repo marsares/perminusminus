@@ -10,12 +10,21 @@ typedef std::vector<Character> Word;
 typedef std::vector<Character> RawSentence;
 typedef std::vector<Word> SegmentedSentence;
 
+/*
 enum POC{
-    POC_B,
-    POC_M,
-    POC_E,
-    POC_S
+    kPOC_B='B',
+    kPOC_M='M',
+    kPOC_E='E',
+    kPOC_S='S'
 };
+*/
+enum POC{
+    kPOC_B='0',
+    kPOC_M='1',
+    kPOC_E='2',
+    kPOC_S='3'
+};
+
 
 typedef std::vector<POC> POCSequence;
 typedef std::vector< std::vector<POC> > POCGraph;

@@ -1,11 +1,11 @@
-all: sl_decoder dagger poc_sequencer learn
+all: dagger train predict
 
 
 
-tagging_learner.o: tagging_learner.cc tagging_learner.h tagging_decoder.h ngram_feature.h ../path_labeling/model.h
+tagging_learner.o: tagging_learner.cc tagging_learner.h tagging_decoder.h ngram_feature.h ../path_labeling/model.h ../base/daidai_base.h
 	g++ -g -c tagging_learner.cc -o tagging_learner.o -O3
 
-tagging_decoder.o: tagging_decoder.cc tagging_decoder.h ngram_feature.h ngram_feature.h ../path_labeling/model.h
+tagging_decoder.o: tagging_decoder.cc tagging_decoder.h ngram_feature.h ngram_feature.h ../path_labeling/model.h ../base/daidai_base.h
 	g++ -g -c tagging_decoder.cc -o tagging_decoder.o -O3
 
 
@@ -14,9 +14,14 @@ sl_decoder: tagging_decoder.o sl_decoder.cc ../path_labeling/decoder.h ../base/d
 	g++ -o sl_decoder sl_decoder.o tagging_decoder.o
 
 
-learn: tagging_learner.o learn.cc tagging_decoder.o ngram_feature.h
-	g++ -g -c -o learn.o learn.cc
-	g++ -o learn learn.o tagging_learner.o tagging_decoder.o
+train: tagging_learner.o train.cc tagging_decoder.o ngram_feature.h
+	g++ -g -c -o train.o train.cc
+	g++ -o train train.o tagging_learner.o tagging_decoder.o
+
+predict: predict.cc tagging_decoder.o
+	g++ -g -c -o predict.o predict.cc
+	g++ -o predict predict.o tagging_decoder.o
+
 
 dagger: tagging_decoder.o dagger.cc
 	g++ -c dagger.cc -o dagger.o -O3 -I ../path_labeling

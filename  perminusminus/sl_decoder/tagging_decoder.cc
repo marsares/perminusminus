@@ -158,10 +158,10 @@ void TaggingDecoder::init(
     for(int i=0;i<model->l_size;i++)
         label_looking_for[i]=NULL;
     for(int i=0;i<model->l_size;i++){
-        if(label_info[i][0]=='0' || label_info[i][0]=='3')continue;
+        if(label_info[i][0]==kPOC_B || label_info[i][0]==kPOC_S)continue;
         
         for(int j=0;j<=i;j++){
-            if((strcmp(label_info[i]+1,label_info[j]+1)==0)&&(label_info[j][0]=='0')){
+            if((strcmp(label_info[i]+1,label_info[j]+1)==0)&&(label_info[j][0]==kPOC_B)){
                 if(label_looking_for[j]==NULL){
                     label_looking_for[j]=new int[2];
                     label_looking_for[j][0]=-1;label_looking_for[j][1]=-1;
@@ -326,7 +326,7 @@ void TaggingDecoder::output_sentence(){
     for(int i=0;i<len;i++){
         daidai::put_character(sequence[i]);
         
-        if((label_info[result[i]][0]=='2')||(label_info[result[i]][0]=='3')){//分词位置
+        if((label_info[result[i]][0]==kPOC_E)||(label_info[result[i]][0]==kPOC_S)){//分词位置
             if(*(label_info[result[i]]+1))//输出标签（如果有的话）
                 printf("%s",label_info[result[i]]+1);
             if((i+1)<len)putchar(' ');//在分词位置输出空格
@@ -353,13 +353,13 @@ void TaggingDecoder::output_allow_tagging(){
             if(!is_good_choice[i*model->l_size+b_label_i]){
                 continue;
             }
-            if(label_info[b_label_i][0]=='3'){
+            if(label_info[b_label_i][0]==kPOC_S){
                 //输出单个字的词
                 this_score=alphas[i*model->l_size+b_label_i].value
                         +betas[i*model->l_size+b_label_i].value
                         -values[i*model->l_size+b_label_i];
                 printf("%d,%d,%s,%d ",i,i+1,label_info[b_label_i]+1,best_score-this_score);
-            }else if(label_info[b_label_i][0]=='0'){
+            }else if(label_info[b_label_i][0]==kPOC_B){
                 int mid_ind=label_looking_for[b_label_i][0];
                 int right_ind=label_looking_for[b_label_i][1];
                 left_part=alphas[i*model->l_size+b_label_i].value;
@@ -400,7 +400,7 @@ int TaggingDecoder::segment(int* input,int length,int* tags){
     dp();//动态规划搜索最优解放在result数组里
     
     for(int i=0;i<len;i++){
-        if((label_info[result[i]][0]=='0')||(label_info[result[i]][0]=='3')){//分词位置
+        if((label_info[result[i]][0]==kPOC_B)||(label_info[result[i]][0]==kPOC_S)){//分词位置
             tags[i]=1;
         }else{
             tags[i]=0;
@@ -418,7 +418,7 @@ int TaggingDecoder::segment(RawSentence& raw,SegmentedSentence& segged){
     put_values();//检索出特征值并初始化放在values数组里
     dp();//动态规划搜索最优解放在result数组里
     for(int i=0;i<len;i++){
-        if((i==0)||(label_info[result[i]][0]=='0')||(label_info[result[i]][0]=='3')){
+        if((i==0)||(label_info[result[i]][0]==kPOC_B)||(label_info[result[i]][0]==kPOC_S)){
             segged.push_back(Word());
         }
         segged.back().push_back(raw[i]);

@@ -4,6 +4,7 @@
 #include"dat.h"
 #include"../path_labeling/model.h"
 #include<map>
+#include "daidai_base.h"
 namespace daidai{//beginning of daidai
 
 /*
@@ -12,7 +13,8 @@ a model, a DAT
 */
 class NGramFeature{
 private:
-
+    static const int SENTENCE_BOUNDARY='#';
+    int SEPERATOR;
     int max_length;
     ///*特征、双数组相关*/
     int* uni_bases;
@@ -25,14 +27,14 @@ private:
 
     permm::Model* model;
 
-    //std::map<Word,int> features;
-    
 public: 
     NGramFeature(){
+        SEPERATOR=' ';
         uni_bases=NULL;
         bi_bases=NULL;
     };
     NGramFeature(DAT* dat,permm::Model* model,int* values){
+        SEPERATOR=' ';
         this->dat=dat->dat;
         this->dat_size=dat->dat_size;
         this->model=model;
@@ -46,51 +48,71 @@ public:
         if(bi_bases)delete[] bi_bases;
     };
 
-    inline void feature_generation(RawSentence& seq,Indexer<RawSentence>& indexer){
+    inline void feature_generation(RawSentence& seq,
+                Indexer<RawSentence>& indexer,
+                Counter<Word>* bigram_counter=NULL){
         int mid=0;
         int left=0;int left2=0;
         int right=0;int right2=0;
         RawSentence key;
-        
+        RawSentence bigram;
         for(int i=0;i<seq.size();i++){
             mid=seq[i];
-            left=(i>0)?(seq[i-1]):('#');
-            left2=((i-2)>=0)?(seq[i-2]):('#');
-            right=((i+1)<seq.size())?(seq[i+1]):('#');
-            right2=((i+2)<seq.size())?(seq[i+2]):('#');
+            left=(i>0)?(seq[i-1]):(SENTENCE_BOUNDARY);
+            left2=((i-2)>=0)?(seq[i-2]):(SENTENCE_BOUNDARY);
+            right=((i+1)<seq.size())?(seq[i+1]):(SENTENCE_BOUNDARY);
+            right2=((i+2)<seq.size())?(seq[i+2]):(SENTENCE_BOUNDARY);
+            
+            if(bigram_counter){
+                if(i==0){
+                    bigram.clear();
+                    bigram.push_back(left2);bigram.push_back(left);
+                    bigram_counter->update(bigram);
+                    bigram.clear();
+                    bigram.push_back(left);bigram.push_back(mid);
+                    bigram_counter->update(bigram);
+                    bigram.clear();
+                    bigram.push_back(mid);bigram.push_back(right);
+                    bigram_counter->update(bigram);
+                }else{
+                    bigram.clear();
+                    bigram.push_back(right);bigram.push_back(right2);
+                    bigram_counter->update(bigram);
+                }
+            }
             
             key.clear();
-            key.push_back(mid);key.push_back(' ');key.push_back('1');
+            key.push_back(mid);key.push_back(SEPERATOR);key.push_back('1');
             indexer.get_index(key);
             key.clear();
-            key.push_back(left);key.push_back(' ');key.push_back('2');
+            key.push_back(left);key.push_back(SEPERATOR);key.push_back('2');
             indexer.get_index(key);
             key.clear();
-            key.push_back(right);key.push_back(' ');key.push_back('3');
+            key.push_back(right);key.push_back(SEPERATOR);key.push_back('3');
             indexer.get_index(key);
             
             key.clear();
-            key.push_back(left);key.push_back(mid);key.push_back(' ');key.push_back('1');
+            key.push_back(left);key.push_back(mid);key.push_back(SEPERATOR);key.push_back('1');
             indexer.get_index(key);
             key.clear();
-            key.push_back(mid);key.push_back(right);key.push_back(' ');key.push_back('2');
+            key.push_back(mid);key.push_back(right);key.push_back(SEPERATOR);key.push_back('2');
             indexer.get_index(key);
             key.clear();
-            key.push_back(left2);key.push_back(left);key.push_back(' ');key.push_back('3');
+            key.push_back(left2);key.push_back(left);key.push_back(SEPERATOR);key.push_back('3');
             indexer.get_index(key);
             key.clear();
-            key.push_back(right);key.push_back(right2);key.push_back(' ');key.push_back('4');
+            key.push_back(right);key.push_back(right2);key.push_back(SEPERATOR);key.push_back('4');
             indexer.get_index(key);
         }
     };
 
     int put_values(int*sequence,int len){
-        find_bases(dat_size,35,35,uni_bases[0],bi_bases[0]);
-        find_bases(dat_size,35,sequence[0],uni_bases[0],bi_bases[1]);
+        find_bases(dat_size,SENTENCE_BOUNDARY,SENTENCE_BOUNDARY,uni_bases[0],bi_bases[0]);
+        find_bases(dat_size,SENTENCE_BOUNDARY,sequence[0],uni_bases[0],bi_bases[1]);
         for(int i=0;i+1<len;i++)
             find_bases(dat_size,sequence[i],sequence[i+1],uni_bases[i+1],bi_bases[i+2]);
-        find_bases(dat_size,sequence[len-1],35,uni_bases[len],bi_bases[len+1]);
-        find_bases(dat_size,35,35,uni_bases[len+1],bi_bases[len+2]);
+        find_bases(dat_size,sequence[len-1],SENTENCE_BOUNDARY,uni_bases[len],bi_bases[len+1]);
+        find_bases(dat_size,SENTENCE_BOUNDARY,SENTENCE_BOUNDARY,uni_bases[len+1],bi_bases[len+2]);
         
         int base=0;
         for(int i=0;i<len;i++){
@@ -113,12 +135,12 @@ public:
 
     };
     int update_weights(int*sequence,int len,int* results,int delta,long steps){
-        find_bases(dat_size,35,35,uni_bases[0],bi_bases[0]);
-        find_bases(dat_size,35,sequence[0],uni_bases[0],bi_bases[1]);
+        find_bases(dat_size,SENTENCE_BOUNDARY,SENTENCE_BOUNDARY,uni_bases[0],bi_bases[0]);
+        find_bases(dat_size,SENTENCE_BOUNDARY,sequence[0],uni_bases[0],bi_bases[1]);
         for(int i=0;i+1<len;i++)
             find_bases(dat_size,sequence[i],sequence[i+1],uni_bases[i+1],bi_bases[i+2]);
-        find_bases(dat_size,sequence[len-1],35,uni_bases[len],bi_bases[len+1]);
-        find_bases(dat_size,35,35,uni_bases[len+1],bi_bases[len+2]);
+        find_bases(dat_size,sequence[len-1],SENTENCE_BOUNDARY,uni_bases[len],bi_bases[len+1]);
+        find_bases(dat_size,SENTENCE_BOUNDARY,SENTENCE_BOUNDARY,uni_bases[len+1],bi_bases[len+2]);
         
         int base=0;
         for(int i=0;i<len;i++){
@@ -182,12 +204,12 @@ private:
         if(dat[ch1].check){
             uni_base=-1;bi_base=-1;return;
         }
-        uni_base=dat[ch1].base+32;
+        uni_base=dat[ch1].base+SEPERATOR;
         int ind=dat[ch1].base+ch2;
         if(ind>=dat_size||dat[ind].check!=ch1){
             bi_base=-1;return;
         }
-        bi_base=dat[ind].base+32;
+        bi_base=dat[ind].base+SEPERATOR;
     }
 
 
