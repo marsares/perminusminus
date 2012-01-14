@@ -6,7 +6,7 @@
 #include<unistd.h>
 #include"dat.h"
 
-
+using namespace daidai;
 bool compare_words (DATMaker::KeyValue& first, DATMaker::KeyValue& second)
 {
     daidai::Word& first_word=first.key;

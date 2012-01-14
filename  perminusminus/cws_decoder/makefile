@@ -1,2 +1,2 @@
-cws_decoder : cws_decoder.cpp
-	g++ cws_decoder.cpp -I ../sl_decoder -I ../path_labeling -o cws_decoder -O3
+cws_decoder : cws_decoder.cpp decoder.h model.h cws_decoder.h
+	g++ cws_decoder.cpp  -o cws_decoder -O3

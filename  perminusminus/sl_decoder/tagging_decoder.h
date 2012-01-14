@@ -3,7 +3,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string.h>
-#include "../base/daidai_base.h"
+#include "daidai_base.h"
+#include "dat.h"
+#include "ngram_feature.h"
 #include "../path_labeling/decoder.h"
 #include "../path_labeling/model.h"
 
@@ -19,35 +21,28 @@ public:
     int** allowed_label_lists;///
     int** pocs_to_tags;///
 
-    ///*特征、双数组相关*/
-    struct DATEntry{
-        int base;
-        int check;
-    };
-    int* uni_bases;
-    int* bi_bases;
+    ///*特征*//
+    NGramFeature* ngram_feature;
+
+
 
     ///*双数组*/
+    DAT* dat;
     int is_old_type_dat;
-    int dat_size;//双数组大小
-    DATEntry* dat;
-    int* bases;//base数组
-    int* checks;//check数组
 
-    ///*模型*/
+    ///*模型参数*/
     permm::Model* model;
 
     ///*解码用*/
     permm::Node* nodes;//只用来存储解码用的节点的拓扑结构
-    int* values;
-    permm::Alpha_Beta* alphas;
-    permm::Alpha_Beta* betas;
-    int* result;
+    int* values;//存各个节点的权重
+    permm::Alpha_Beta* alphas;//前向算法数据
+    permm::Alpha_Beta* betas;//后向算法数据
+    int best_score;
+    int* result;//存储结果
+    
     char** label_info;
 
-    ///**字对应的标记*/
-    int* char_label_map;
-    int* allowed_labels;
 
     ///**合法转移矩阵*/
     int*label_trans;
@@ -56,11 +51,10 @@ public:
 
     ///*后处理用*/
     int threshold;
-    int* allow_sep;
     int* allow_com;
 
     ///*后处理用_ tagging*/
-    int tag_size;
+    int tag_size;//postag的个数
     int** label_looking_for;
     int* is_good_choice;
     
@@ -68,18 +62,18 @@ public:
     TaggingDecoder();
     ~TaggingDecoder();
     
-    /*双数组trie树相关*/
-    void load_da(char* filename,int &size);
     
     /*初始化*/
-    void init(char* model_file,char* dat_file,char* label_file,
-        char* label_trans=NULL,char* label_lists_file=NULL);
-    
+    void init(const char* model_file,const char* dat_file,const char* label_file,
+        char* label_trans=NULL);
+    void set_label_trans();//
+   
+    /*解码*/
+    void put_values();
     void dp();
     void cal_betas();
-    void put_values();
     
-    /*切分*/
+    /*接口*/
     int segment(int* input,int length,int* tags);
     int segment(RawSentence&,SegmentedSentence&);
     int segment(RawSentence&,POCGraph&,SegmentedSentence&);
@@ -88,21 +82,13 @@ public:
     void find_good_choice();
     
     /*输入输出*/
-    int get_input_from_stream(int*input,int max_length,int& length);    
-    
     void output_raw_sentence();
     void output_sentence();
     void output_allow_tagging();
-    void output(int show_sentence);
     
-    void set_label_trans();
 private:
-    /*双数组trie树相关*/
-    inline void find_bases(int dat_size,int ch1,int ch2,int& uni_base,int&bi_base);
 
-    inline void add_values(int *value_offset,int base,int del,int* p_allowed_label);
 
-    void load_label_lists(char*filename);
     void load_label_trans(char*filename);
     
     

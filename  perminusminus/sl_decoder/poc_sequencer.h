@@ -34,7 +34,7 @@ private:
 public:
     APPOCSequencer(int threshold=15){
         char model_file[]="ctb5/seg.model";
-        char dat_file[]="ctb5/seg.dat";
+        char dat_file[]="ctb5/seg.dat2";
         char label_file[]="ctb5/seg.label_index";
         decoder=new daidai::TaggingDecoder();
         decoder->threshold=threshold*1000;

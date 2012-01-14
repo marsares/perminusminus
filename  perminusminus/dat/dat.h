@@ -3,7 +3,10 @@
 #include<vector>
 #include<cstdio>
 #include<iostream>
-#include"../base/daidai_base.h"
+#include"daidai_base.h"
+
+namespace daidai{
+
 class DAT{
 public:
     struct Entry{
@@ -16,18 +19,30 @@ public:
     size_t dat_size;
     DAT(){};
     DAT(const char* filename,int is_old_type=false){
+
+        FILE * pFile=fopen(filename,"rb");
+        fseek(pFile,0,SEEK_END);
+        dat_size=ftell(pFile)/sizeof(Entry);
+        rewind(pFile);
+        int rtn;
+        dat=(Entry*)calloc(sizeof(Entry),dat_size);
         if(!is_old_type){
-            FILE * pFile=fopen(filename,"rb");
-            fseek(pFile,0,SEEK_END);
-            dat_size=ftell(pFile)/sizeof(Entry);
-            rewind(pFile);
-
-            dat=(Entry*)calloc(sizeof(Entry),dat_size);
-            int rtn=fread(dat,sizeof(Entry),dat_size,pFile);
-            fclose(pFile);
+            rtn=fread(dat,sizeof(Entry),dat_size,pFile);
         }else{
-
+            int* bases=NULL;
+            int* checks=NULL;
+            bases=(int*) malloc (sizeof(int)*dat_size);
+            checks=(int*) malloc (sizeof(int)*dat_size);
+            rtn=fread (bases,sizeof(int),dat_size,pFile);
+            rtn=fread (checks,sizeof(int),dat_size,pFile);
+            for(int i=0;i<dat_size;i++){
+                dat[i].base=bases[i];
+                dat[i].check=checks[i];
+            }
+            free(bases);
+            free(checks);
         }
+        fclose(pFile);
     }
 
     void save_as(const char* filename){
@@ -286,3 +301,5 @@ public:
         printf("\n");
     }
 };
+
+}//end of daidai

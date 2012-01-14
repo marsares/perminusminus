@@ -77,7 +77,7 @@ inline void nb_heap_insert(Alpha_Beta* heap,int max_size,int& count,Alpha_Beta& 
 
 
 /** The DP algorithm(s) for path labeling */
-inline void dp_decode(
+inline int dp_decode(
         int l_size,///标签个数
         int* ll_weights,///标签间权重
         int node_count,///节点个数
@@ -147,7 +147,7 @@ inline void dp_decode(
         result[tmp->node_id]=tmp->label_id;
         tmp=&(alphas[(tmp->node_id)*l_size+(tmp->label_id)]);
     }
-    return;
+    return best.value;
 };
 
 

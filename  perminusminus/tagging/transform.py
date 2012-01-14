@@ -5,6 +5,12 @@ import json_to_binary
 import indexer
 import getopt
 
+b_key_set=set()
+for line in open('yuwei/bigram.txt',encoding='utf8'):
+    line=line.split()
+    if int(line[1])<20:break
+    b_key_set.add(line[0])
+
 tag_map={'X':'FW','VP':'PU','NP':'NN',
         }
 
@@ -31,10 +37,14 @@ def gen_keys(seq,i):
     right2=seq[i+2] if i+2<len(seq) else '#'
     keys=[mid+" 1",left+" 2",right+" 3"]
 
-    keys.append(left+mid+' 1')
+    '''keys.append(left+mid+' 1')
     keys.append(mid+right+' 2')
     keys.append(left2+left+' 3')
-    keys.append(right+right2+' 4')
+    keys.append(right+right2+' 4')'''
+    if left+mid in b_key_set:keys.append(left+mid+' 1')
+    if mid+right in b_key_set:keys.append(mid+right+' 2')
+    if left2+left in b_key_set:keys.append(left2+left+' 3')
+    if right+right2 in b_key_set:keys.append(right+right2+' 4')
 
     return keys
 

@@ -5,7 +5,7 @@
 #include<iostream>
 #include<unistd.h>
 
-
+using namespace daidai;
 daidai::Word word;
 
 void call_back(int b,int e){

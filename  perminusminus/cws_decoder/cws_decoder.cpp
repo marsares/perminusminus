@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "sl_decoder.h"
+#include "cws_decoder.h"
 int sl_decoder_show_sentence=0;
 
 void output_allow_cws(){

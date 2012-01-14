@@ -32,6 +32,24 @@ struct Model{
         free(this->ave_fl_weights);
         
     }
+    void reset_ave_weights(){
+        free(this->ave_ll_weights);
+        free(this->ave_fl_weights);
+        this->ave_ll_weights=(double*)calloc(sizeof(double),l_size*l_size);
+        this->ave_fl_weights=(double*)calloc(sizeof(double),l_size*f_size);
+    }
+    
+    void update_ll_weight(const int& i,const int& j,const int& delta,const long& steps){
+        int ind=i*l_size+j;
+        //std::cout<<i<<" "<<j<<" "<<ind<<"\n";
+        this->ll_weights[ind]+=delta;
+        //this->ave_ll_weights[ind]+=steps;
+    }
+    void update_fl_weight(const int& i,const int& j,const int& delta,const long& steps){
+        int ind=i*l_size+j;
+        this->fl_weights[ind]+=delta;
+        //this->ave_fl_weights[ind]+=steps;
+    }
     
     void average(int step){
         int l_size=this->l_size;
@@ -64,7 +82,7 @@ struct Model{
         }
     }
     
-    Model(char* filename):ave_ll_weights(NULL),ave_fl_weights(NULL){
+    Model(const char* filename):ave_ll_weights(NULL),ave_fl_weights(NULL){
         FILE* pFile;
         int rtn_value;
         pFile=fopen(filename,"rb");
@@ -81,7 +99,7 @@ struct Model{
         fclose(pFile);
     }
     
-    void save(char* filename){
+    void save(const char* filename){
         FILE* pFile=fopen(filename,"wb");
         int l_size=this->l_size;
         int f_size=this->f_size;

@@ -15,21 +15,15 @@ void showhelp(){
 
 int main (int argc,char **argv) {
     TaggingDecoder* cws_decoder=new TaggingDecoder();
-    int sl_decoder_show_sentence=0;
     TaggingDecoder* tag_decoder=new TaggingDecoder();
     tag_decoder->threshold=0;
     cws_decoder->threshold=15000;
     
     int c;
-    char* label_trans=NULL;
-    char* label_lists_file=NULL;
-    while ( (c = getopt(argc, argv, "t:sh")) != -1) {
+    while ( (c = getopt(argc, argv, "t:h")) != -1) {
         switch (c) {
-            case 't' : ///output word lattice
+            case 't' : //specify the threshold for the CWS model
                 cws_decoder->threshold = atoi(optarg)*1000;
-                break;
-            case 's':///输出lattice之前输出原句
-                sl_decoder_show_sentence=1;
                 break;
             case 'h' :
             case '?' : 
@@ -51,7 +45,9 @@ int main (int argc,char **argv) {
         seg_label_ind[ind++]=value;
     }
     fclose(fp);
-    cws_decoder->init(seg_model,seg_dat,seg_label,NULL,NULL);
+    //cws_decoder->is_old_type_dat=true;
+    cws_decoder->init(seg_model,seg_dat,seg_label);
+    cws_decoder->set_label_trans();
 
     
     ///tagging的解码器初始化
@@ -61,7 +57,8 @@ int main (int argc,char **argv) {
     char* tag_dat=argv[optind+4];
     char* tag_label=argv[optind+5];
     
-    tag_decoder->init(tag_model,tag_dat,tag_label,NULL,NULL);
+   // tag_decoder->is_old_type_dat=true;
+    tag_decoder->init(tag_model,tag_dat,tag_label);
     tag_decoder->set_label_trans();
     
     int l_size=tag_decoder->model->l_size;
@@ -106,42 +103,39 @@ int main (int argc,char **argv) {
     ///开始运行
     int*input=new int[1000];
     int*tags=new int[1000];
-    int max_length=100;
+    int max_length=1000;
     int length=0;
     int rtn=1;
     while(rtn){
-
-        rtn=cws_decoder->get_input_from_stream(input,max_length,length);
-        if(!rtn)break;
-        cws_decoder->segment(input,length,tags);
-        
-        
-        //cws_decoder->output_sentence();
-        //printf("\n");
-        
-        cws_decoder->cal_betas();
-        //cws_decoder->output_allow_tagging();
-        //printf("\n");
-        cws_decoder->find_good_choice();
-        
-        
-        int seg_ind;
-        for(int i=0;i<length;i++){
-            int tag_code=0;
-            for(int j=0;j<4;j++){
-                seg_ind=seg_label_ind[j];
-                //printf("%d,%d ",seg_ind,cws_decoder->is_good_choice[i*4+j]);
-                tag_code+=(cws_decoder->is_good_choice[i*4+j]<<seg_ind);
+        rtn=daidai::get_raw(input,max_length,length);
+        if(length){
+            cws_decoder->segment(input,length,tags);
+            cws_decoder->cal_betas();
+            cws_decoder->find_good_choice();
+            
+            int seg_ind;
+            for(int i=0;i<length;i++){
+                int tag_code=0;
+                for(int j=0;j<4;j++){
+                    seg_ind=seg_label_ind[j];
+                    tag_code+=(cws_decoder->is_good_choice[i*4+j]<<seg_ind);
+                }
+                tag_decoder->allowed_label_lists[i]=allowed_tags[tag_code];
             }
-            //printf(" %d\n",(int)allowed_tags_lists[tag_code].size());
-            tag_decoder->allowed_label_lists[i]=allowed_tags[tag_code];
+            tag_decoder->segment(input,length,tags);
+            tag_decoder->output_sentence();
         }
-        
-        tag_decoder->segment(input,length,tags);
-        tag_decoder->output_sentence();
-
-        printf("\n");
+        if(rtn==-1)break;
+        putchar(rtn);
     }
+    
+    delete[] input;
+    delete[] tags;
+    for(int i=1;i<16;i++)delete[] allowed_tags[i];
+
+    delete cws_decoder;
+    delete tag_decoder;
+
     return 0;
 }
 

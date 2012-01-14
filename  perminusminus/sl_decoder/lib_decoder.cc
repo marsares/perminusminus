@@ -142,6 +142,7 @@ int cws_init(){
     char dat_file[]="data/dat.bin";
     char label_file[]="data/label.txt";
     
+    tagging_decoder->is_old_type_dat=1;
     tagging_decoder->init(model_file+0,dat_file+0,label_file+0);
     
     
