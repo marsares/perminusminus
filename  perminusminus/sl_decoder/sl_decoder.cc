@@ -51,7 +51,7 @@ int main (int argc,char **argv) {
     //read_stream();
     int*input=new int[1000];
     int*tags=new int[1000];
-    int max_length=100;
+    int max_length=1000;
     int length=0;
     int rtn=1;
     daidai::RawSentence raw;

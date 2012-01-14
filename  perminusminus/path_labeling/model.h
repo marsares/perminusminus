@@ -43,12 +43,12 @@ struct Model{
         int ind=i*l_size+j;
         //std::cout<<i<<" "<<j<<" "<<ind<<"\n";
         this->ll_weights[ind]+=delta;
-        //this->ave_ll_weights[ind]+=steps;
+        this->ave_ll_weights[ind]+=steps*delta;
     }
     void update_fl_weight(const int& i,const int& j,const int& delta,const long& steps){
         int ind=i*l_size+j;
         this->fl_weights[ind]+=delta;
-        //this->ave_fl_weights[ind]+=steps;
+        this->ave_fl_weights[ind]+=steps*delta;
     }
     
     void average(int step){
