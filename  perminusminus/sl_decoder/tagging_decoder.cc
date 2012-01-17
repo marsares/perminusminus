@@ -14,6 +14,7 @@ TaggingDecoder::TaggingDecoder(){
 
     ngram_feature=NULL;
 
+    
 
     dat=NULL; 
     is_old_type_dat=false;
@@ -306,10 +307,8 @@ void TaggingDecoder::put_values(){
     }
     nodes[0].type+=1;
     nodes[len-1].type+=2;
-    
     /*values*/
     memset(values,0,sizeof(*values)*len*model->l_size);
-
     ngram_feature->put_values(sequence,len);
 }
 

@@ -16,7 +16,7 @@ private:
     std::string str;
     std::string item;
 
-    char del;
+    char del;//词和词性之间的分隔符
     RawSentence tag;
     RawSentence word;
 
@@ -27,10 +27,10 @@ public:
         Word word;
         Word tag;
     };
-
+ 
     std::ifstream* ifs;
-    TaggedFileLoader(const char* filename){
-        del='_';
+    TaggedFileLoader(const char* filename,int del='_'){
+        this->del=del;
         ifs=new std::ifstream(filename,std::ifstream::in);
     };
     void load(std::vector<WordAndTag>& seq){
@@ -88,8 +88,14 @@ void TaggingLearner::train(const char*training_file,
     Counter<Word> bigram_counter;
     Word bigram;
     
+
+        
+
     std::vector<TaggedFileLoader::WordAndTag> sent;
-    TaggedFileLoader* tfl=new TaggedFileLoader(training_file);
+    TaggedFileLoader* tfl=new TaggedFileLoader(training_file,this->separator);
+
+    
+    std::cout<<"separator: ["<<(char)this->separator<<"]\n";
     while((*(tfl->ifs))){
         tfl->load(sent);
         if(!sent.size())continue;
@@ -115,7 +121,7 @@ void TaggingLearner::train(const char*training_file,
         
     }
     delete tfl;
-    
+    std::cerr<<"training file \""<<training_file<<"\" scanned\n";
     
     //dat_file
 
@@ -146,19 +152,20 @@ void TaggingLearner::train(const char*training_file,
     dm->shrink();
     dm->save_as(dat_file);
     delete dm;
-    fprintf(stderr,"dat file created\n");
+    std::cerr<<"DAT (double array TRIE) file \""<<dat_file<<"\" created\n";
     
     
     //model_file
     int l_size=tag_indexer.list.size();
     int f_size=kv.size();
-    std::cout<<l_size<<"\n";
+    fprintf(stderr,"number of labels: \n",l_size);
+    fprintf(stderr,"number of features: \n",f_size);
     std::cout<<f_size<<"\n";
     permm::Model* model=new permm::Model(l_size,f_size);
     model->save(model_file);
     delete model;
-    fprintf(stderr,"model file created\n");
     
+    std::cerr<<"model file \""<<model_file<<"\" created\n";
     
     
     
@@ -169,10 +176,13 @@ void TaggingLearner::train(const char*training_file,
         fputc('\n',pFile);
     }
     fclose(pFile);
-    fprintf(stderr,"label file created\n");
+    std::cerr<<"label file \""<<label_file<<"\" created\n";
     
     //init decoder
     init(model_file,dat_file,label_file);
+    //do not use the original read-only model.
+    delete this->model;
+    this->model=new permm::Model(model_file,false);
     this->model->reset_ave_weights();
     fprintf(stderr,"decoder initialized\n");
     
@@ -181,21 +191,21 @@ void TaggingLearner::train(const char*training_file,
     long steps=0;
     for(int t=0;t<this->T;t++){
         fprintf(stderr,"iteration %d\n",t+1);
+        //continue;
         int number_nodes=0;
         int number_correct=0;
-        tfl=new TaggedFileLoader(training_file);
+        tfl=new TaggedFileLoader(training_file,this->separator);
         while((*(tfl->ifs))){
             tfl->load(sent);
             if(!sent.size())continue;
             steps++;
             len=0;
             
-            
-            
+            //putchar('\n');
             for(int i=0;i<sent.size();i++){
                 const RawSentence& word=sent[i].word;
                 const RawSentence& tag=sent[i].tag;
-                
+                //put_raw(word);putchar(' ');   
                 for(int j=0;j<word.size();j++){
                     
                     this->sequence[len]=word[j];
@@ -211,12 +221,24 @@ void TaggingLearner::train(const char*training_file,
                         }
                     }
                     len++;
-                }
-                
-            }
+                    if(len>=this->max_length){
+                        //fprintf(stderr,"longer than max\n");
+                        break;
+                    }
 
-            //decode
+                }
+                if(len>=this->max_length){
+                    fprintf(stderr,"longer than max\n");
+                    break;
+                }
+            }
+            if(len>=this->max_length){
+                continue;
+            }
+            //printf("len: %d\n",len);
+                        //decode
             put_values();
+            //continue;
             dp();
 
             

@@ -53,7 +53,7 @@ inline int put_word(Word w,FILE * pFile=stdout){
         put_character(w[j],pFile);
     }
 }
-inline int put_raw(RawSentence& r,FILE * pFile=stdout){
+inline int put_raw(const RawSentence& r,FILE * pFile=stdout){
     for(size_t j=0;j<r.size();j++){
         put_character(r[j],pFile);
     }

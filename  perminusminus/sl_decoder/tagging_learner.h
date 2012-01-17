@@ -16,7 +16,7 @@ class TaggingLearner : public  TaggingDecoder {
 public:
     Character* gold_standard;
     int T;
-    Character seperator;
+    Character separator;
     int seg_only;
     int bigram_threshold;
     void load_tagged_sentence(FILE* file);
@@ -27,10 +27,10 @@ public:
             const char*model_file,
             const char*label_file);
 
-    TaggingLearner(int T=15,Character seperator='/',int seg_only=false){
+    TaggingLearner(int T=15,Character separator='/',int seg_only=false){
         this->T=T;
         this->gold_standard=new int[this->max_length];
-        this->seperator=seperator;
+        this->separator=separator;
         this->seg_only=seg_only;
         bigram_threshold=1;
     };

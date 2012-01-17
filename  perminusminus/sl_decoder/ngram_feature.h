@@ -38,7 +38,7 @@ public:
         this->dat=dat->dat;
         this->dat_size=dat->dat_size;
         this->model=model;
-        max_length=1000;
+        max_length=10000;
         this->uni_bases=new int[this->max_length+2];
         this->bi_bases=new int[this->max_length+4];
         this->values=values;
@@ -107,13 +107,17 @@ public:
     };
 
     int put_values(int*sequence,int len){
+        if(len>=this->max_length){
+            fprintf(stderr,"larger than max\n");
+            return 1;
+        }
         find_bases(dat_size,SENTENCE_BOUNDARY,SENTENCE_BOUNDARY,uni_bases[0],bi_bases[0]);
         find_bases(dat_size,SENTENCE_BOUNDARY,sequence[0],uni_bases[0],bi_bases[1]);
         for(int i=0;i+1<len;i++)
             find_bases(dat_size,sequence[i],sequence[i+1],uni_bases[i+1],bi_bases[i+2]);
+        //return 1;
         find_bases(dat_size,sequence[len-1],SENTENCE_BOUNDARY,uni_bases[len],bi_bases[len+1]);
         find_bases(dat_size,SENTENCE_BOUNDARY,SENTENCE_BOUNDARY,uni_bases[len+1],bi_bases[len+2]);
-        
         int base=0;
         for(int i=0;i<len;i++){
             int* value_offset=values+i*model->l_size;

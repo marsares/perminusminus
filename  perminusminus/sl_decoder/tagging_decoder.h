@@ -6,8 +6,8 @@
 #include "daidai_base.h"
 #include "dat.h"
 #include "ngram_feature.h"
-#include "../path_labeling/decoder.h"
-#include "../path_labeling/model.h"
+#include "decoder.h"
+#include "model.h"
 
 namespace daidai{
 
@@ -24,7 +24,7 @@ public:
     ///*特征*//
     NGramFeature* ngram_feature;
 
-
+    
 
     ///*双数组*/
     DAT* dat;

@@ -86,7 +86,7 @@ void test(char* modelfile,char*testfile,char*resultfile,int decode_type,
                     fprintf(pFile," %.3f",
                             (double)(permm.alphas[i*model->l_size+j].value
                             -permm.values[i*model->l_size+j]
-                            +permm.betas[i*model->l_size+j].value)/DEC
+                            +permm.betas[i*model->l_size+j].value)/Model::DEC
                             );
                 }
                 fprintf(pFile,"\n");
@@ -97,9 +97,9 @@ void test(char* modelfile,char*testfile,char*resultfile,int decode_type,
                 fprintf(pFile,"%d %d",graph->labels[i],permm.result[i]);
                 for(int j=0;j<model->l_size;j++){
                     fprintf(pFile," %.3f/%.3f/%.3f",
-                            (double)(permm.alphas[i*model->l_size+j].value)/DEC,
-                            (double)(permm.values[i*model->l_size+j])/DEC,
-                            (double)(permm.betas[i*model->l_size+j].value)/DEC
+                            (double)(permm.alphas[i*model->l_size+j].value)/Model::DEC,
+                            (double)(permm.values[i*model->l_size+j])/Model::DEC,
+                            (double)(permm.betas[i*model->l_size+j].value)/Model::DEC
                             );
                 }
                 fprintf(pFile,"\n");

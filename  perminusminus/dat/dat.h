@@ -3,6 +3,8 @@
 #include<vector>
 #include<cstdio>
 #include<iostream>
+#include<sys/mman.h>
+#include<fcntl.h>
 #include"daidai_base.h"
 
 namespace daidai{
@@ -15,20 +17,30 @@ public:
     };
 
     typedef std::vector<int> Word;
+    void* mmap_ptr;
     Entry* dat;
     size_t dat_size;
-    DAT(){};
+    DAT():mmap_ptr(NULL){};
     DAT(const char* filename,int is_old_type=false){
 
         FILE * pFile=fopen(filename,"rb");
+        if(!pFile){
+            fprintf(stderr,"[ERROR] DAT file %s not found\n",filename);
+        }
         fseek(pFile,0,SEEK_END);
         dat_size=ftell(pFile)/sizeof(Entry);
         rewind(pFile);
         int rtn;
-        dat=(Entry*)calloc(sizeof(Entry),dat_size);
         if(!is_old_type){
-            rtn=fread(dat,sizeof(Entry),dat_size,pFile);
+            //rtn=fread(dat,sizeof(Entry),dat_size,pFile);
+            fclose(pFile);
+            
+            int fd=open(filename,O_RDONLY);
+            mmap_ptr=mmap(NULL,sizeof(Entry)*dat_size,PROT_READ,MAP_SHARED,fd,0);
+            dat=(Entry*)mmap_ptr;
+            close(fd);
         }else{
+            dat=(Entry*)calloc(sizeof(Entry),dat_size);
             int* bases=NULL;
             int* checks=NULL;
             bases=(int*) malloc (sizeof(int)*dat_size);
@@ -41,8 +53,8 @@ public:
             }
             free(bases);
             free(checks);
+            fclose(pFile);
         }
-        fclose(pFile);
     }
 
     void save_as(const char* filename){
@@ -62,7 +74,11 @@ public:
     }
 
     ~DAT(){
-        free(dat);
+        if(this->mmap_ptr){
+            munmap(this->mmap_ptr,sizeof(Entry)*this->dat_size);
+        }else{
+            free(dat);
+        }
     }
     int search(Word& sentence,void(*call_back)(int,int),int post=0){
         int empty=1;

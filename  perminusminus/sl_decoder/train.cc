@@ -9,7 +9,7 @@ using namespace daidai;
 
 int main (int argc,char **argv) {
     int iteration=15;
-    Character seperator='/';
+    Character separator='/';
     int seg_only=false;
     int bigram_threshold=1;
     static struct option long_options[] =
@@ -17,7 +17,7 @@ int main (int argc,char **argv) {
 			//{"verbose", no_argument,       &verbose_flag, 1},
 			{"seg_only",   no_argument,       &seg_only, 1},
 			{"help",     no_argument,       0, 'h'},
-            {"seperator",     required_argument,       0, 's'},
+            {"separator",     required_argument,       0, 's'},
 			{"iteration",  required_argument,       0, 'i'},
             {"bigram_threshold",  required_argument,       0, 'b'},
             
@@ -33,7 +33,7 @@ int main (int argc,char **argv) {
                 bigram_threshold=atoi(optarg);
                 break;
             case 's':
-                seperator=optarg[0];
+                separator=optarg[0];
                 break;
             case 'i' : 
                 iteration=atoi(optarg);
@@ -46,7 +46,6 @@ int main (int argc,char **argv) {
                 return 1;
         }
     }
-    
     if(!(optind+1<argc)){
         fprintf(stderr,"need two auguments for training file and prefix for model files\n");
         return 1;
@@ -55,8 +54,8 @@ int main (int argc,char **argv) {
     std::string training_filename(argv[optind]);
     std::string model_filename_prefix(argv[optind+1]);
     
-    //std::cout<<seperator<<"\n";
-    TaggingLearner* tl=new TaggingLearner(iteration,seperator,seg_only);
+    //std::cout<<separator<<"\n";
+    TaggingLearner* tl=new TaggingLearner(iteration,separator,seg_only);
     tl->bigram_threshold=bigram_threshold;
     tl->train(training_filename.c_str(),
             (model_filename_prefix+"_model.bin").c_str(),
