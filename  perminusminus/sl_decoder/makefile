@@ -76,3 +76,6 @@ test_time: sl_decoder
 
 clear:
 	rm *.o -f
+	rm train -f
+	rm predict -f
+	rm dagger -f
