@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <string>
 #include "tagging_decoder.h"
 #include "daidai_base.h"
 
@@ -46,7 +47,9 @@ int main (int argc,char **argv) {
     }
     
     tagging_decoder->is_old_type_dat=is_old_type_dat;
-    tagging_decoder->init(argv[optind],argv[optind+1],argv[optind+2],label_trans);
+    std::string prefix(argv[optind]);
+    tagging_decoder->init((prefix+"_model.bin").c_str(),(prefix+"_dat.bin").c_str(),(prefix+"_label.txt").c_str(),label_trans);
+
     if(!label_trans)tagging_decoder->set_label_trans();
     //read_stream();
     int*input=new int[1000];

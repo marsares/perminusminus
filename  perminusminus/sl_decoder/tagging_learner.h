@@ -46,7 +46,7 @@ private:
         char_tag.clear();
         char_tag.push_back(poc);
         if((!seg_only)&&tag.size()){
-            char_tag.push_back('/');
+            //char_tag.push_back('/');
             for(size_t j=0;j<tag.size();j++)char_tag.push_back(tag[j]);
         }
         return tag_indexer.get_index(char_tag);

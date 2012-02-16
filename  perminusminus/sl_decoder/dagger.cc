@@ -33,32 +33,40 @@ int main (int argc,char **argv) {
         }
     }
     ///cws解码器初始化
-    char* seg_model=argv[optind];
-    char* seg_dat=argv[optind+1];
-    char* seg_label=argv[optind+2];
+    std::string seg_prefix(argv[optind]);
+    std::string tag_prefix(argv[optind+1]);
+
+    //char* seg_model=argv[optind];
+    //char* seg_dat=argv[optind+1];
+    //char* seg_label=argv[optind+2];
     int seg_label_ind[]={0,0,0,0};
     FILE *fp;
-    fp = fopen(seg_label, "r");
+    fp = fopen((seg_prefix+"_label.txt").c_str(), "r");
     int ind=0;
     int value=0;
     while( fscanf(fp, "%d", &value)==1){
         seg_label_ind[ind++]=value;
     }
     fclose(fp);
-    //cws_decoder->is_old_type_dat=true;
-    cws_decoder->init(seg_model,seg_dat,seg_label);
+    //cws_decoder->init(seg_model,seg_dat,seg_label);
+    cws_decoder->init((seg_prefix+"_model.bin").c_str()
+            ,(seg_prefix+"_dat.bin").c_str()
+            ,(seg_prefix+"_label.txt").c_str());
     cws_decoder->set_label_trans();
 
     
     ///tagging的解码器初始化
     
     
-    char* tag_model=argv[optind+3];
-    char* tag_dat=argv[optind+4];
-    char* tag_label=argv[optind+5];
+    //char* tag_model=argv[optind+3];
+    //char* tag_dat=argv[optind+4];
+    //char* tag_label=argv[optind+5];
     
    // tag_decoder->is_old_type_dat=true;
-    tag_decoder->init(tag_model,tag_dat,tag_label);
+    tag_decoder->init((tag_prefix+"_model.bin").c_str()
+            ,(tag_prefix+"_dat.bin").c_str()
+            ,(tag_prefix+"_label.txt").c_str());
+    //tag_decoder->init(tag_model,tag_dat,tag_label);
     tag_decoder->set_label_trans();
     
     int l_size=tag_decoder->model->l_size;
@@ -66,7 +74,7 @@ int main (int argc,char **argv) {
     std::list<int> allowed_tags_lists[16];
     
 
-    fp = fopen(tag_label, "r");
+    fp = fopen((tag_prefix+"_label.txt").c_str(), "r");
     char char_cache[16];
     ind=0;
     

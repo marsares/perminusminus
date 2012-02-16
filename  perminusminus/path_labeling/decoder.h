@@ -103,11 +103,23 @@ inline int dp_decode(
     for(int i=0;i<node_count*l_size;i++)alphas[i].node_id=-2;
     for(int i=0;i<node_count;i++){//for each node
         p_allowed_label=allowed_label_lists?allowed_label_lists[i]:NULL;
-        
+        j=-1;
+        int max_value=0;
+        int has_max_value=0;
+        while((p_allowed_label?
+                    ((j=(*(p_allowed_label++)))!=-1)://如果有指定，则按照列表来
+                    ((++j)!=l_size))){//否则枚举
+            if((!has_max_value) || (max_value<values[i*l_size+j])){
+                has_max_value=1;
+                max_value=values[i*l_size+j];
+            }
+        }
+        p_allowed_label=allowed_label_lists?allowed_label_lists[i]:NULL;
         j=-1;
         while((p_allowed_label?
                     ((j=(*(p_allowed_label++)))!=-1)://如果有指定，则按照列表来
                     ((++j)!=l_size))){//否则枚举
+            //if(max_value-20000>values[i*l_size+j])continue;//
             tmp=&alphas[i*l_size+j];
             tmp->value=0;
             p_node_id=nodes[i].predecessors;
@@ -147,6 +159,21 @@ inline int dp_decode(
         result[tmp->node_id]=tmp->label_id;
         tmp=&(alphas[(tmp->node_id)*l_size+(tmp->label_id)]);
     }
+    //debug
+    /*(for(int i=0;i<node_count;i++){//for each node
+        p_allowed_label=allowed_label_lists?allowed_label_lists[i]:NULL;   
+        j=-1;
+        std::cerr<<values[i*l_size+result[i]]<<" ";
+        while((p_allowed_label?
+                    ((j=(*(p_allowed_label++)))!=-1)://如果有指定，则按照列表来
+                    ((++j)!=l_size))){//否则枚举
+            tmp=&alphas[i*l_size+j];
+            std::cerr<<values[i*l_size+j]<<" ";  
+        }
+        std::cerr<<"\n";
+    }
+    std::cerr<<"\n";*/
+    //end of debug
     return best.value;
 };
 

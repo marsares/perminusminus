@@ -1,33 +1,12 @@
 #pragma once
-#include<vector>
-#include<map>
-#include<string>
-
+#include <vector>
+#include <iostream>
+#include <map>
+#include <string>
+#include <cstdio>
 namespace daidai{
 
 typedef int Character;
-typedef std::vector<Character> Word;
-typedef std::vector<Character> RawSentence;
-typedef std::vector<Word> SegmentedSentence;
-
-/*
-enum POC{
-    kPOC_B='B',
-    kPOC_M='M',
-    kPOC_E='E',
-    kPOC_S='S'
-};
-*/
-enum POC{
-    kPOC_B='0',
-    kPOC_M='1',
-    kPOC_E='2',
-    kPOC_S='3'
-};
-
-
-typedef std::vector<POC> POCSequence;
-typedef std::vector< std::vector<POC> > POCGraph;
 
 inline int put_character(Character c,FILE * pFile=stdout){
     if(c<128){//1个byte的utf-8
@@ -46,6 +25,79 @@ inline int put_character(Character c,FILE * pFile=stdout){
         fputc(0x80|(c&0x3f),pFile);
     };
 };
+
+inline int put_character(Character c,std::ostream& os){
+    if(c<128){//1个byte的utf-8
+        os<<(char)c;
+    }else if(c<0x800){//2个byte的utf-8
+        os<<(char)(0xc0|(c>>6));
+        os<<(char)(0x80|(c&0x3f));
+    }else if(c<0x10000){//3个byte的utf-8
+        os<<(char)(0xe0|((c>>12)&0x0f));
+        os<<(char)(0x80|((c>>6)&0x3f));
+        os<<(char)(0x80|(c&0x3f));
+    }else {//4个byte的utf-8
+        os<<(char)(0xf0|((c>>18)&0x07));
+        os<<(char)(0x80|((c>>12)&0x3f));
+        os<<(char)(0x80|((c>>6)&0x3f));
+        os<<(char)(0x80|(c&0x3f));
+    };
+};
+
+class Raw:public std::vector<Character>{
+public:
+    Raw& operator+=(Raw& right){
+        for(size_t i=0;i<right.size();i++){
+            this->push_back(right[i]);
+        };
+        return *this;
+    };
+    Raw& operator+=(const char* right){
+        while(*right){
+            this->push_back(*(right++));
+        }
+        return *this;
+    };
+
+    Raw& operator+=(const char& right){
+        this->push_back(right);
+        return *this;
+    };
+    Raw& operator+=(const std::string& right){
+        for(size_t i=0;i<right.size();i++){
+            this->push_back(right[i]);
+        };
+        return *this;
+    };
+    friend std::ostream& operator<< (std::ostream& os,Raw& raw){
+        for(size_t i=0;i<raw.size();i++){
+            put_character(raw[i],os);
+        }
+        return os;    
+    };
+};
+
+
+
+//typedef std::vector<Character> Word;
+typedef Raw Word;
+//typedef std::vector<Character> RawSentence;
+typedef Raw RawSentence;
+typedef std::vector<Word> SegmentedSentence;
+
+
+
+
+enum POC{
+    kPOC_B='0',
+    kPOC_M='1',
+    kPOC_E='2',
+    kPOC_S='3'
+};
+
+
+typedef std::vector<POC> POCSequence;
+typedef std::vector< std::vector<POC> > POCGraph;
 
 
 inline int put_word(Word w,FILE * pFile=stdout){

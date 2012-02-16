@@ -16,7 +16,6 @@ public:
         int check;
     };
 
-    typedef std::vector<int> Word;
     void* mmap_ptr;
     Entry* dat;
     size_t dat_size;
@@ -105,7 +104,7 @@ public:
         }
         return !empty;
     }
-    int match(Word& word,int post=0){
+    int match(const Word& word,int post=0){
         register int ind=0;
         register int base=0;
         for(int i=0;i<(int)word.size();i++){

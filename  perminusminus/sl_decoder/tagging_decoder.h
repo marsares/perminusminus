@@ -14,6 +14,8 @@ namespace daidai{
 
 class TaggingDecoder{
 public:
+    char separator;
+
     int max_length;
     /*句子*/
     int len;//句子长度
@@ -90,7 +92,6 @@ private:
 
 
     void load_label_trans(char*filename);
-    
     
 };
 

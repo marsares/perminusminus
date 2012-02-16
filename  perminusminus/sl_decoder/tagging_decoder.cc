@@ -6,6 +6,7 @@ namespace daidai{
 
 
 TaggingDecoder::TaggingDecoder(){
+    this->separator='_';
     this->max_length=10000;
     this->len=0;
     this->sequence=new int[this->max_length];
@@ -326,8 +327,10 @@ void TaggingDecoder::output_sentence(){
         daidai::put_character(sequence[i]);
         
         if((label_info[result[i]][0]==kPOC_E)||(label_info[result[i]][0]==kPOC_S)){//分词位置
-            if(*(label_info[result[i]]+1))//输出标签（如果有的话）
+            if(*(label_info[result[i]]+1)){//输出标签（如果有的话）
+                putchar(separator);
                 printf("%s",label_info[result[i]]+1);
+            }
             if((i+1)<len)putchar(' ');//在分词位置输出空格
         }
     }
@@ -358,6 +361,10 @@ void TaggingDecoder::output_allow_tagging(){
                         +betas[i*model->l_size+b_label_i].value
                         -values[i*model->l_size+b_label_i];
                 printf("%d,%d,%s,%d ",i,i+1,label_info[b_label_i]+1,best_score-this_score);
+                //printf("%d,",i);
+                //put_character(this->sequence[i]);
+                //putchar(',');
+                //printf("%s,%d ",label_info[b_label_i]+1,best_score-this_score);
             }else if(label_info[b_label_i][0]==kPOC_B){
                 int mid_ind=label_looking_for[b_label_i][0];
                 int right_ind=label_looking_for[b_label_i][1];
@@ -372,8 +379,14 @@ void TaggingDecoder::output_allow_tagging(){
                         this_score=left_part
                                 +model->ll_weights[last_id*model->l_size+right_ind]
                                 +betas[j*model->l_size+right_ind].value;
-                        if(best_score-this_score<=threshold)
+                        if(best_score-this_score<=threshold){
                             printf("%d,%d,%s,%d ",i,j+1,label_info[b_label_i]+1,best_score-this_score);
+                            //printf("%d,",i);
+                            //for(int k=i;k<=j;k++)
+                            //    put_character(this->sequence[k]);
+                            //putchar(',');
+                            //printf("%s,%d ",label_info[b_label_i]+1,best_score-this_score);
+                        }
                     }
                     if(mid_ind==-1)break;
                     if(!is_good_choice[(j*(model->l_size))+mid_ind])
