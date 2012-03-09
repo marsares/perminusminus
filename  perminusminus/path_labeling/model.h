@@ -1,7 +1,7 @@
 #pragma once
-#include<cstdio>
-#include<sys/mman.h>
-#include<fcntl.h>
+#include <cstdio>
+#include <sys/mman.h>
+#include <fcntl.h>
 namespace permm{
 
 /*the structure of the model, also the file of the model*/

@@ -39,6 +39,10 @@ public:
     std::vector<Edge> edges;
 
 public:
+    void clear(){
+        nodes.clear();
+        edges.clear();
+    }
     /*perfrom the algorithm and return the best value*/
     inline ValueType forward_algorithm(){
         ValueType value;

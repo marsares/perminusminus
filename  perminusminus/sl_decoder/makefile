@@ -4,31 +4,30 @@ all: dagger train predict
 OptArg=-O3
 #OptArg=
 
+project_root=..
 
-tagging_learner.o: tagging_learner.cc tagging_learner.h tagging_decoder.h ngram_feature.h model.h daidai_base.h decoder.h dat.h
-	g++ -g -c tagging_learner.cc -o tagging_learner.o $(OptArg)
+cxx=g++ $(OptArg) -I ..
 
-tagging_decoder.o: tagging_decoder.cc tagging_decoder.h ngram_feature.h ngram_feature.h model.h decoder.h daidai_base.h dat.h
-	g++ -g -c tagging_decoder.cc -o tagging_decoder.o $(OptArg)
+tagging_learner.o: tagging_learner.cc tagging_learner.h tagging_decoder.h ngram_feature.h model.h $(project_root)/base/* decoder.h dat.h
+	$(cxx) -g -c tagging_learner.cc -o tagging_learner.o
 
-
-sl_decoder: tagging_decoder.o sl_decoder.cc decoder.h daidai_base.h
-	g++ -c sl_decoder.cc -o sl_decoder.o -O3
-	g++ -o sl_decoder sl_decoder.o tagging_decoder.o
+tagging_decoder.o: tagging_decoder.cc tagging_decoder.h ngram_feature.h ngram_feature.h model.h decoder.h $(project_root)/base/* dat.h
+	$(cxx) -g -c tagging_decoder.cc -o tagging_decoder.o
 
 
-train: tagging_learner.o train.cc tagging_decoder.o ngram_feature.h
-	g++ -g -c -o train.o train.cc $(OptArg)
-	g++ -o train train.o tagging_learner.o tagging_decoder.o
-
-predict: predict.cc tagging_decoder.o
-	g++ -g -c -o predict.o predict.cc
-	g++ -o predict predict.o tagging_decoder.o
+sl_decoder: tagging_decoder.h sl_decoder.cc $(project_root)/* $(project_root)/base/*
+	$(cxx) sl_decoder.cc -o sl_decoder
 
 
-dagger: tagging_decoder.o dagger.cc
-	g++ -c dagger.cc -o dagger.o -O3
-	g++ -o dagger dagger.o tagging_decoder.o
+train: tagging_learner.h train.cc tagging_decoder.h ngram_feature.h
+	$(cxx) -g -o train train.cc
+
+predict: predict.cc tagging_decoder.h
+	$(cxx) -g -o predict predict.cc
+
+
+dagger: tagging_decoder.h dagger.cc
+	$(cxx) dagger.cc -o dagger
 	
 
 
@@ -56,14 +55,10 @@ libcws.so: tagging_decoder.h tagging_decoder.cc lib_decoder.h lib_decoder.cc dat
 	g++ -g -c tagging_decoder.cc -o tagging_decoder.o -O3 -fPIC
 	g++ -g -fPIC -shared lib_decoder.o tagging_decoder.o -o libcws.so
 
-poc_sequencer: tagging_decoder.o poc_sequencer.* dat.h
-	g++ -g -c poc_sequencer.cc -o poc_sequencer.o -O3
-	g++ -g -o poc_sequencer poc_sequencer.o tagging_decoder.o
+poc_sequencer: tagging_decoder.h poc_sequencer.* dat.h
+	$(cxx) -g poc_sequencer.cc -o poc_sequencer
 	
-poc:
-	g++ -g -c tagging_decoder.cc -o tagging_decoder.o -O3
-	g++ -g -c poc_sequencer.cc -o poc_sequencer.o -O3
-	g++ -g -o poc_sequencer poc_sequencer.o tagging_decoder.o
+poc: poc_sequencer
 	echo '背景？我没去过背景啊！' | ./poc_sequencer
 
 test_time: sl_decoder

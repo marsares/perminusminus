@@ -1,24 +1,13 @@
 #include<cstdlib>
 #include<vector>
-#include<list>
 #include<cstdio>
 #include<iostream>
+#include<fstream>
+#include<string>
 #include<unistd.h>
 #include"dat.h"
 
 using namespace daidai;
-bool compare_words (DATMaker::KeyValue& first, DATMaker::KeyValue& second)
-{
-    daidai::Word& first_word=first.key;
-    daidai::Word& second_word=second.key;
-    size_t min_size=(first_word.size()<second_word.size())?first_word.size():second_word.size();
-    for(int i=0;i<min_size;i++){
-        if(first_word[i]>second_word[i])return false;
-        if(first_word[i]<second_word[i])return true;
-    }
-    
-  return (first_word.size()<second_word.size());
-}
 
 
 void showhelp(){
@@ -34,8 +23,12 @@ int main(int argc,char **argv){
     int is_old_style=false;
     char* lexicon_filename=NULL;
     int no_prefix=0;
-    while ( (c = getopt(argc, argv, "f:shP")) != -1) {
+    char separator=0;
+    while ( (c = getopt(argc, argv, "f:shPi")) != -1) {
         switch (c) {
+            case 'i':// the index is 
+                separator=' ';
+                break;
             case 's'://seperated two arrays
                 is_old_style=true;
                 break;
@@ -54,57 +47,86 @@ int main(int argc,char **argv){
     }
     char* dat_filename=argv[optind];
     
+    //输入文件名
     FILE* inputFile=stdin;
-    
+    std::istream* is=&std::cin;
+    std::cout<<"begin\n";
+    std::string str;
+    if(lexicon_filename){
+        std::cout<<"file\n";
+        is=new std::ifstream(lexicon_filename,std::ifstream::in);
+    }
+   
     
     DATMaker dm;
-    fprintf(stdout,"Double Array Trie Builder, author ZHANG, Kaixu\n");
+    fprintf(stderr,"Double Array Trie Builder, author ZHANG, Kaixu\n");
     std::vector<DATMaker::KeyValue> lexicon;
-    std::list<DATMaker::KeyValue> word_list;
-    word_list.push_back(DATMaker::KeyValue());
+    lexicon.push_back(DATMaker::KeyValue());
     int end_character=0;
     
     //load wordlist
     int id=0;
-    if(lexicon_filename){
-        inputFile=fopen(lexicon_filename,"r");
-    }
+
+    void* rtn;
     do{
-        end_character=daidai::get_raw(word_list.back().key,inputFile,32);//space is allowed
-        if((int)word_list.back().key.size()>0){
-            word_list.back().value=id;
-            word_list.push_back(DATMaker::KeyValue());
-            word_list.back().key.clear();
+        rtn=std::getline(*is,str);
+        if(str.length()==0)continue;
+        if(separator){//to find a score as value instread of id
+            int sep_ind=str.rfind(separator);
+            daidai::string_to_raw(str.substr(0,sep_ind),lexicon.back().key);
+            //std::cout<<lexicon.back().key<<"\n";
+            lexicon.back().value=atoi(str.substr(sep_ind+1).c_str());
+        }else{
+            daidai::string_to_raw(str,lexicon.back().key);
+            lexicon.back().value=id;
+        }
+
+        //init a new element
+        lexicon.push_back(DATMaker::KeyValue());
+        lexicon.back().key.clear();
+        id+=1;
+    }while(rtn);
+        
+    
+
+    /*do{
+        end_character=daidai::get_raw(lexicon.back().key,inputFile,32);//space is allowed
+        if((int)lexicon.back().key.size()>0){
+            if(separator){//to find a score as value instread of id
+                int sep_ind=lexicon.back().key.rfind(separator);
+                std::cout<<sep_ind<<"\n";
+                lexicon.back().value=id;
+            }else{
+                lexicon.back().value=id;
+            }
+
+            //init a new element
+            lexicon.push_back(DATMaker::KeyValue());
+            lexicon.back().key.clear();
             id+=1;
         }
         if(end_character==-1)break;
-    }while(1);
+    }while(1);*/
     if(lexicon_filename){
         fclose(inputFile);
     }
-    word_list.pop_back();
+    lexicon.pop_back();
     
-    //sort
-    word_list.sort(compare_words);
-    //make it a vector
-    for(std::list<DATMaker::KeyValue>::iterator it=word_list.begin();it!=word_list.end();++it){
-        lexicon.push_back((*it));
-    }
-    
+        
 
     
     
-    fprintf(stdout,"%d words are loaded\n",(int)lexicon.size());
+    fprintf(stderr,"%d words are loaded\n",(int)lexicon.size());
     dm.make_dat(lexicon,no_prefix);
     dm.shrink();
-    fprintf(stdout,"size of DAT %d\n",(int)dm.dat_size);
+    fprintf(stderr,"size of DAT %d\n",(int)dm.dat_size);
     
     //save it
     if(is_old_style)
         dm.save_as_old_type(dat_filename);
     else
         dm.save_as(dat_filename);
-    
+    if(is!=&std::cin)delete is;
 };
 
 

@@ -1,3 +1,4 @@
+#pragma once
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -5,19 +6,65 @@
 #include <fstream>
 #include <algorithm>
 #include "framework.h"
-#include "daidai_base.h"
-#include "dat.h"
+#include "base/daidai_base.h"
+#include "dat/dat.h"
 namespace daidai{
 namespace hypergraph{
 
-struct LatticeEdge{
-    int begin;//begin
-    Word word;//string
-    std::string tag;//pos tag of the word
-    int margin;//margin
-};
 
 typedef Hypergraph<int,LatticeEdge> Graph;
+
+/* 从分词词性标注的输出lattice，到超图的graph的转换
+ * 边变成节点，节点变成若干边
+ * */
+void lattice_to_graph(Lattice& lattice,Graph& graph){
+    graph.clear();
+    for(int i=0;i<lattice.size();i++){
+        graph.nodes.push_back(Graph::Node());
+        graph.nodes.back().data=lattice[i];
+        graph.nodes.back().gold_standard=0;
+        graph.nodes.back().is_begin=(lattice[i].begin==0)?1:0;
+        graph.nodes.back().is_end=0;
+    }
+//    std::cout<<graph.nodes.size()<<"\n";
+    std::vector< std::vector<int> > ends;
+    for(int i=0;i<graph.nodes.size();i++){
+        const LatticeEdge& lattice_edge=graph.nodes[i].data;
+        int end=lattice_edge.begin+lattice_edge.word.size();
+//        std::cout<<lattice_edge.begin<<" "<<end<<" "<<"\n";
+       // put_raw(lattice_edge.word);
+        while(ends.size()<=end)ends.push_back(std::vector<int>());
+        ends[end].push_back(i);
+    }
+    for(int i=0;i<graph.nodes.size();i++){
+        LatticeEdge& lattice_edge=graph.nodes[i].data;
+        int begin=lattice_edge.begin;
+        int end=lattice_edge.begin + lattice_edge.word.size();
+        if(end==ends.size()-1){//end of the sentence
+            graph.nodes[i].is_end=1;
+        }
+        for(int j=0;j<ends[begin].size();j++){
+            int ind=ends[begin][j];
+            graph.edges.push_back(Graph::Edge());
+            graph.edges.back().to=&graph.nodes[i];
+            graph.edges.back().from.push_back(&(graph.nodes[ind]));
+        }
+    }
+};
+
+void graph_to_lattice(Graph&graph, Lattice& lattice,int only_result=0){
+    lattice.clear();
+    for(int i=0;i<graph.nodes.size();i++){
+        if(!(only_result)||(graph.nodes[i].result==1)){
+            lattice.push_back(graph.nodes[i].data);
+        }
+    }
+};
+
+
+class LearningGraph: public Graph{
+};
+
 
 class LatticeIO:public DataIO<int,LatticeEdge>{
     const char* filename;
@@ -36,6 +83,7 @@ public:
     };
     void reset(){
         //if(fstream)fstream->close();
+        //std::cout<<"reset.\n";
         delete fstream;
         if(mode=='r'){
             fstream=new std::fstream(filename,std::fstream::in);
@@ -46,9 +94,11 @@ public:
      * load lines, and make the graph
      * */ 
     int load(Graph& graph){
+        //std::cout<<"what\n";
         if(mode=='w')return 0;
         std::string str;
         if(!std::getline(*fstream,str))return 0;
+        //std::cout<<str<<"\n";
         readline(str,graph);
         //if(graph.nodes.size()==2)std::cout<<graph.nodes.size()<<"\n";
         //std::cout<<str<<"\n";
@@ -58,7 +108,7 @@ public:
         if(mode=='r')return 0;
         int start=1;
         for(int i=0;i<graph.nodes.size();i++){
-            if(graph.nodes[i].result==1){
+            if(graph.nodes[i].result==1){//如果是结果，才输出
             //if(graph.nodes[i].data.margin==0){
                 if(start){
                     start=0;
@@ -73,6 +123,9 @@ public:
         fstream->flush();
     };
     ~LatticeIO(){
+        fstream->flush();
+        fstream->close();
+        std::cout<<"closed\n";
         delete fstream;
     };
 private:
@@ -89,7 +142,6 @@ private:
         
         //std::cout<<line<<"\n";
 
-        std::vector< std::vector<int> > ends;
 
         while(iss){
             item.clear();
@@ -119,6 +171,7 @@ private:
         }
         
         std::sort(graph.nodes.begin(),graph.nodes.end(),&compare_nodes);
+        std::vector< std::vector<int> > ends;
         for(int i=0;i<graph.nodes.size();i++){
             const LatticeEdge& lattice_edge=graph.nodes[i].data;
             int end=lattice_edge.begin+lattice_edge.word.size();
@@ -137,7 +190,6 @@ private:
                 graph.edges.push_back(Graph::Edge());
                 graph.edges.back().to=&graph.nodes[i];
                 graph.edges.back().from.push_back(&(graph.nodes[ind]));
-                //std::cout<<graph.nodes[ind].data.begin<<" "<<graph.nodes[i].data.begin<<"\n";
             }
         }
 
@@ -155,18 +207,31 @@ private:
 class NodeFeature{
 public:
     NodeFeature(){};
-    virtual int generate(Graph::Node& node,Raw& key)=0;
+    virtual int generate(Graph::Node& node,Raw& key){};
+    virtual void add_features(Graph::Node& node,std::vector<Raw>& keys){
+        keys.push_back(Raw());
+        if(generate(node,keys.back())!=0){
+            keys.pop_back();
+        };
+    };
 };
 
 
 class EdgeFeature{
 public:
     EdgeFeature(){};
-    virtual int generate(Graph::Node& left,Graph::Node& right,Raw& key)=0;
+    virtual int generate(Graph::Node& left,Graph::Node& right,Raw& key){};
+    virtual void add_features(Graph::Node& left,Graph::Node& right,std::vector<Raw>& keys){
+        keys.push_back(Raw());
+        if(generate(left,right,keys.back())!=0){
+            keys.pop_back();
+        };
+    };
+
 };
 
 
-class GeneralNodeFeature: public NodeFeature{
+class GeneralNodeFeature : public NodeFeature{
 public:
     int use_tag;
     int use_word;
@@ -313,6 +378,7 @@ public:
             ,int filter=0
             ){
         RawSentence key;
+        std::vector<Raw> keys;
         for(int i=0;i<graph.nodes.size();i++){
             Graph::Node& node=graph.nodes[i];
             LatticeEdge& lattice_edge=node.data;
@@ -325,11 +391,23 @@ public:
             };
 
             for(int fid=0;fid<node_features.size();fid++){
-                key.clear();
+                //continue;
+                //std::cout<<fid<<"\n";
+                keys.clear();
+                node_features[fid]->add_features(node,keys);
+                for(int j=0;j<keys.size();j++){
+                    key.clear();
+                    key+='u';
+                    key.push_back(fid+33);
+                    key+=keys[j];
+                    //put_raw(key);putchar('\n');
+                    (this->*call_back)(key,node.weight);
+                }
+                /*key.clear();
                 key+='u';
                 key.push_back(fid+33);
                 if(node_features[fid]->generate(node,key)==0)
-                    (this->*call_back)(key,node.weight);
+                    (this->*call_back)(key,node.weight);*/
             }
         }
         for(int i=0;i<graph.edges.size();i++){
@@ -354,11 +432,22 @@ public:
                 if(flag==0)continue;
             }
             for(int fid=0;fid<edge_features.size();fid++){
-                key.clear();
+                //continue;
+                keys.clear();
+                edge_features[fid]->add_features(left_node,right_node,keys);
+                for(int j=0;j<keys.size();j++){
+                    key.clear();
+                    key+='b';
+                    key.push_back(fid+33);
+                    key+=keys[j];
+                    (this->*call_back)(key,edge.weight);
+                }
+                /*key.clear();
                 key+='b';
                 key.push_back(fid+33);
                 if(edge_features[fid]->generate(left_node,right_node,key)==0)
                     (this->*call_back)(key,edge.weight);
+                    */
             }
         }
     };

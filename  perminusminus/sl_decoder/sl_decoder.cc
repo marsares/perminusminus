@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <string>
 #include "tagging_decoder.h"
-#include "daidai_base.h"
+#include "base/daidai_base.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,7 +25,8 @@ int main (int argc,char **argv) {
     int c;
     char* label_trans=NULL;
     int is_old_type_dat=false;
-    while ( (c = getopt(argc, argv, "b:t:shD")) != -1) {
+    int std_lattice=false;
+    while ( (c = getopt(argc, argv, "b:t:shDl")) != -1) {
         switch (c) {
             case 'D' : ///old type的DAT树
                 is_old_type_dat=true;
@@ -38,6 +39,9 @@ int main (int argc,char **argv) {
             case 's':///输出lattice之前输出原句
                 sl_decoder_show_sentence=1;
                 break;
+            case 'l'://输出标准的lattice格式
+                std_lattice=true;
+                break;
             case 'h' :
             case '?' : 
             default : 
@@ -46,6 +50,8 @@ int main (int argc,char **argv) {
         }
     }
     
+    Lattice lattice;
+
     tagging_decoder->is_old_type_dat=is_old_type_dat;
     std::string prefix(argv[optind]);
     tagging_decoder->init((prefix+"_model.bin").c_str(),(prefix+"_dat.bin").c_str(),(prefix+"_label.txt").c_str(),label_trans);
@@ -67,11 +73,17 @@ int main (int argc,char **argv) {
                 tagging_decoder->output_sentence();
             }else{
                 if(sl_decoder_show_sentence){
+
                     tagging_decoder->output_raw_sentence();
                     printf(" ");
                 }
                 tagging_decoder->cal_betas();
-                tagging_decoder->output_allow_tagging();
+                if(!std_lattice){
+                    tagging_decoder->output_allow_tagging();
+                }else{
+                    tagging_decoder->generate_lattice(lattice); 
+                    std::cout<<lattice;
+                }
             }
         }
         if(rtn==-1)break;

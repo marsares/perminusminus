@@ -54,12 +54,14 @@ int main(int argc,char **argv){
     do{
         end_character=daidai::get_raw(word);
         if(word.size()){
+            printf("here\n");
             if(is_matching){
                 int rtn=dat.match(word);
                 if(rtn==-1){
                     std::cout<<"not matched";
                 }else{
                     std::cout<<rtn<<" "<<dat.dat[rtn].base;
+                    //dat.dat[rtn].base+=1;
                 }
                 
             }else{

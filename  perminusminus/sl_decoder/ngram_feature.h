@@ -1,10 +1,10 @@
 #pragma once
 #include<cstdio>
 #include<iostream>
-#include"dat.h"
-#include"../path_labeling/model.h"
+#include"dat/dat.h"
+#include"path_labeling/model.h"
 #include<map>
-#include "daidai_base.h"
+#include "base/daidai_base.h"
 namespace daidai{//beginning of daidai
 
 /*

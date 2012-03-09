@@ -3,85 +3,16 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <sstream>
 #include <cstdio>
+#include <cstdlib>
+
+#include "raw.h"
+
 namespace daidai{
 
-typedef int Character;
 
-inline int put_character(Character c,FILE * pFile=stdout){
-    if(c<128){//1个byte的utf-8
-        fputc(c,pFile);
-    }else if(c<0x800){//2个byte的utf-8
-        fputc(0xc0|(c>>6),pFile);
-        fputc(0x80|(c&0x3f),pFile);
-    }else if(c<0x10000){//3个byte的utf-8
-        fputc(0xe0|((c>>12)&0x0f),pFile);
-        fputc(0x80|((c>>6)&0x3f),pFile);
-        fputc(0x80|(c&0x3f),pFile);
-    }else {//4个byte的utf-8
-        fputc(0xf0|((c>>18)&0x07),pFile);
-        fputc(0x80|((c>>12)&0x3f),pFile);
-        fputc(0x80|((c>>6)&0x3f),pFile);
-        fputc(0x80|(c&0x3f),pFile);
-    };
-};
-
-inline int put_character(Character c,std::ostream& os){
-    if(c<128){//1个byte的utf-8
-        os<<(char)c;
-    }else if(c<0x800){//2个byte的utf-8
-        os<<(char)(0xc0|(c>>6));
-        os<<(char)(0x80|(c&0x3f));
-    }else if(c<0x10000){//3个byte的utf-8
-        os<<(char)(0xe0|((c>>12)&0x0f));
-        os<<(char)(0x80|((c>>6)&0x3f));
-        os<<(char)(0x80|(c&0x3f));
-    }else {//4个byte的utf-8
-        os<<(char)(0xf0|((c>>18)&0x07));
-        os<<(char)(0x80|((c>>12)&0x3f));
-        os<<(char)(0x80|((c>>6)&0x3f));
-        os<<(char)(0x80|(c&0x3f));
-    };
-};
-
-class Raw:public std::vector<Character>{
-public:
-    Raw& operator+=(Raw& right){
-        for(size_t i=0;i<right.size();i++){
-            this->push_back(right[i]);
-        };
-        return *this;
-    };
-    Raw& operator+=(const char* right){
-        while(*right){
-            this->push_back(*(right++));
-        }
-        return *this;
-    };
-
-    Raw& operator+=(const char& right){
-        this->push_back(right);
-        return *this;
-    };
-    Raw& operator+=(const std::string& right){
-        for(size_t i=0;i<right.size();i++){
-            this->push_back(right[i]);
-        };
-        return *this;
-    };
-    friend std::ostream& operator<< (std::ostream& os,Raw& raw){
-        for(size_t i=0;i<raw.size();i++){
-            put_character(raw[i],os);
-        }
-        return os;    
-    };
-};
-
-
-
-//typedef std::vector<Character> Word;
 typedef Raw Word;
-//typedef std::vector<Character> RawSentence;
 typedef Raw RawSentence;
 typedef std::vector<Word> SegmentedSentence;
 
@@ -97,118 +28,101 @@ enum POC{
 
 
 typedef std::vector<POC> POCSequence;
-typedef std::vector< std::vector<POC> > POCGraph;
+typedef std::vector<int> POCGraph;
 
 
 inline int put_word(Word w,FILE * pFile=stdout){
     for(int j=0;j<(int)w.size();j++){
         put_character(w[j],pFile);
     }
-}
-inline int put_raw(const RawSentence& r,FILE * pFile=stdout){
-    for(size_t j=0;j<r.size();j++){
-        put_character(r[j],pFile);
-    }
-}
+};
 
-inline int string_to_raw(const std::string& str,RawSentence& sent){
-    sent.clear();
-    int current_character=-1;
-    int c;
-    for(int i=0;i<str.length();i++){
-        c=str.at(i);
-        if(!(c&0x80)){//1个byte的utf-8编码
-            if(current_character!=-1)sent.push_back(current_character);
-            current_character=c;//+65248;//半角转全角，放入缓存
-        }else if(!(c&0x40)){//not a beginning of a Character
-            current_character=(current_character<<6)+(c&0x3f);
-        }else if(!(c&0x20)){//2个byte的utf-8编码
-            if(current_character!=-1)sent.push_back(current_character);
-            current_character=(c&0x1f);
-        }else if(!(c&0x10)){//3个byte的utf-8编码
-            if(current_character!=-1)sent.push_back(current_character);
-            current_character=(c&0x0f);
-        }else if(!(c&0x80)){//4个byte的utf-8编码
-            if(current_character!=-1)sent.push_back(current_character);
-            current_character=(c&0x07);
-        }else{//更大的unicode编码不能处理
-            if(current_character!=-1)sent.push_back(current_character);
-            current_character=0;
-        }
-    }
-    if(current_character>0)sent.push_back(current_character);
-    return 0;
-}
 
-inline int get_raw(RawSentence& sent,FILE* pFile=stdin,int min_char=33){
-    sent.clear();
-    int current_character=-1;
-    int c;
-    while(1){//反复读取输入流
-        c=fgetc(pFile);
-        if(c==EOF){
-            if(current_character!=-1)sent.push_back(current_character);
-            return c;//end of file
-        }
-        if(!(c&0x80)){//1个byte的utf-8编码
-            if(current_character!=-1)sent.push_back(current_character);
-            if(c<min_char){//非打印字符及空格
-                return c;
-            }else{//一般ascii字符
-                current_character=c;//+65248;//半角转全角，放入缓存
-            }
-        }else if(!(c&0x40)){//not a beginning of a Character
-            current_character=(current_character<<6)+(c&0x3f);
-        }else if(!(c&0x20)){//2个byte的utf-8编码
-            if(current_character!=-1)sent.push_back(current_character);
-            current_character=(c&0x1f);
-        }else if(!(c&0x10)){//3个byte的utf-8编码
-            if(current_character!=-1)sent.push_back(current_character);
-            current_character=(c&0x0f);
-        }else if(!(c&0x80)){//4个byte的utf-8编码
-            if(current_character!=-1)sent.push_back(current_character);
-            current_character=(c&0x07);
-        }else{//更大的unicode编码不能处理
-            if(current_character!=-1)sent.push_back(current_character);
-            current_character=0;
-        }
+struct WordWithTag{
+    Word word;
+    std::string tag;
+    friend std::ostream& operator<< (std::ostream& os,WordWithTag& wwt){
+        os<<wwt.word<<"_"<<wwt.tag;
+        return os;
     }
-}
-inline int get_raw(Character* seq,int max_len,int&len,FILE* pFile=stdin,int min_char=33){
-    len=0;
-    Character current_character=-1;
-    int c;
-    while(1){//反复读取输入流
-        
-        c=fgetc(pFile);
-        if(c==EOF){
-            if((current_character!=-1)&&(len<max_len))seq[len++]=current_character;
-            return c;//end of file
+};
+
+//typedef std::vector<WordWithTag> TaggedSentence;
+class TaggedSentence: public std::vector<WordWithTag>{
+    friend std::ostream& operator<< (std::ostream& os,TaggedSentence& sentence){
+        for(size_t i=0;i<sentence.size();i++){
+            if(i!=0)os<<" ";
+            os<<sentence[i];
         }
-        if(!(c&0x80)){//1个byte的utf-8编码
-            if((current_character!=-1)&&(len<max_len))seq[len++]=current_character;
-            if(c<min_char){//非打印字符及空格
-                return c;
-            }else{//一般ascii字符
-                current_character=c;//+65248;//半角转全角，放入缓存
-            }
-        }else if(!(c&0x40)){//not a beginning of a Character
-            current_character=(current_character<<6)+(c&0x3f);
-        }else if(!(c&0x20)){//2个byte的utf-8编码
-            if((current_character!=-1)&&(len<max_len))seq[len++]=current_character;
-            current_character=(c&0x1f);
-        }else if(!(c&0x10)){//3个byte的utf-8编码
-            if((current_character!=-1)&&(len<max_len))seq[len++]=current_character;
-            current_character=(c&0x0f);
-        }else if(!(c&0x80)){//4个byte的utf-8编码
-            if((current_character!=-1)&&(len<max_len))seq[len++]=current_character;
-            current_character=(c&0x07);
-        }else{//更大的unicode编码不能处理
-            if((current_character!=-1)&&(len<max_len))seq[len++]=current_character;
-            current_character=0;
+        return os;    
+    };
+
+};
+
+
+struct LatticeEdge{
+    int begin;//begin
+    Word word;//string
+    std::string tag;//pos tag of the word
+    int margin;//margin
+    
+    friend std::ostream& operator<< (std::ostream& os,LatticeEdge& edge){
+        os<<edge.begin<<"_"<<edge.word<<"_"<<edge.tag<<"_"<<edge.margin;
+        return os;    
+    };
+    friend std::istream& operator>> (std::istream& is,LatticeEdge& edge){
+        return is;
+    };
+};
+
+class Lattice: public std::vector<LatticeEdge>{
+public:
+    static int split_item(std::string& item,int offset,std::string& str){
+        int del_ind=item.find_first_of('_',offset);
+        str=item.substr(offset,del_ind-offset);
+        return del_ind+1;
+    };
+    friend std::ostream& operator<< (std::ostream& os,Lattice& lattice){
+        for(int i=0;i<lattice.size();i++){
+            if(i>0)os<<" ";
+            os<<lattice[i];
         }
+        return os;
     }
-}
+    friend std::istream& operator>> (std::istream& is,Lattice& lattice){
+        lattice.clear();
+        std::string str;
+        std::string item;
+        std::getline(is,str);
+
+        std::istringstream iss(str);
+        while(iss){
+            item.clear();
+            iss>>item;
+            if(item.length()==0)continue;
+            lattice.push_back(LatticeEdge());
+            LatticeEdge& edge=lattice.back();
+            int offset=0;
+            std::string begin_str;
+            offset=split_item(item,offset,begin_str);
+            edge.begin=atoi(begin_str.c_str());
+            std::string word_str;
+            offset=split_item(item,offset,word_str);
+            string_to_raw(word_str,edge.word);
+            //edge.word+=word_str;
+            offset=split_item(item,offset,edge.tag);
+            std::string margin_str;
+            offset=split_item(item,offset,margin_str);
+            edge.margin=atoi(margin_str.c_str());
+            
+
+        }
+        return is;
+    };
+
+};
+
+
 
 
 template<class KEY>
@@ -247,7 +161,6 @@ public:
         }
         (*this)[key]++;
     }
-    
 };
 
 }//end of daidai

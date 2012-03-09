@@ -237,37 +237,7 @@ inline void dp_cal_betas(
         }
     }
     return;
-    /*
-    int node_id;
-    int* p_node_id;
     
-    
-    Alpha_Beta* tmp;
-    int score=0;
-    
-    for(int i=node_count-1;i>=0;i--){//for each node
-        for(int j=0;j<l_size;j++){//for each label
-            tmp=&betas[i*l_size+j];
-            tmp->node_id=-2;//non-reach
-            tmp->value=0;
-            p_node_id=nodes[i].successors;
-            while((node_id=*(p_node_id++))>=0){
-                for(int k=0;k<l_size;k++){
-                    if(betas[node_id*l_size+k].node_id==-2)continue;
-                    score=betas[node_id*l_size+k].value+ll_weights[j*l_size+k];
-                    if((tmp->node_id<0)||(score>tmp->value)){
-                        tmp->value=score;
-                        tmp->node_id=node_id;
-                        tmp->label_id=k;
-                    }
-                }
-            }
-            tmp->value+=values[i*l_size+j];
-            if((nodes[i].type==2)||(nodes[i].type==3))
-                tmp->node_id=-1;
-        }
-    }
-    return;*/
 };
 
 

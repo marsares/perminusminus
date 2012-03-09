@@ -3,9 +3,10 @@
 #include<vector>
 #include<cstdio>
 #include<iostream>
+#include<algorithm>
 #include<sys/mman.h>
 #include<fcntl.h>
-#include"daidai_base.h"
+#include"base/daidai_base.h"
 
 namespace daidai{
 
@@ -22,7 +23,7 @@ public:
     DAT():mmap_ptr(NULL){};
     DAT(const char* filename,int is_old_type=false){
 
-        FILE * pFile=fopen(filename,"rb");
+        FILE * pFile=fopen(filename,"r+b");
         if(!pFile){
             fprintf(stderr,"[ERROR] DAT file %s not found\n",filename);
         }
@@ -34,8 +35,8 @@ public:
             //rtn=fread(dat,sizeof(Entry),dat_size,pFile);
             fclose(pFile);
             
-            int fd=open(filename,O_RDONLY);
-            mmap_ptr=mmap(NULL,sizeof(Entry)*dat_size,PROT_READ,MAP_SHARED,fd,0);
+            int fd=open(filename,O_RDWR);
+            mmap_ptr=mmap(NULL,sizeof(Entry)*dat_size,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
             dat=(Entry*)mmap_ptr;
             close(fd);
         }else{
@@ -74,11 +75,49 @@ public:
 
     ~DAT(){
         if(this->mmap_ptr){
+            msync(this->mmap_ptr,sizeof(Entry)*this->dat_size,MS_ASYNC);
             munmap(this->mmap_ptr,sizeof(Entry)*this->dat_size);
         }else{
             free(dat);
         }
     }
+    inline int get_index(int base,const Character& character){
+        
+        int ind=dat[base].base+character;
+        if((ind>=dat_size)||dat[ind].check!=base)return -1;
+        return ind;
+    };
+
+    int search(Word& sentence,std::vector<int>&bs,std::vector<int>&es,int post=0){
+        bs.clear();
+        es.clear();
+        int empty=1;
+        for(int offset=0;offset<(int)sentence.size();offset++){
+            int pre_base=0;
+            int pre_ind=0;
+            int ind=0;
+            for(int i=offset;i<(int)sentence.size();i++){
+                ind=pre_base+sentence[i];
+                if(ind<0||ind>=dat_size||dat[ind].check!=pre_ind)break;
+                pre_ind=ind;
+                pre_base=dat[ind].base;
+                ind=pre_base+post;
+                if(!(ind<0||ind>=dat_size||dat[ind].check!=pre_ind)){
+                    bs.push_back(offset);
+                    es.push_back(i+1);
+//                    call_back(offset,i+1);
+                    if(empty){
+                        //printf("%d:%d",offset,i+1);
+                        empty=0;
+                    }else{
+                        //printf(" %d:%d",offset,i+1);
+                    }
+                }
+            }
+        }
+        return !empty;
+    }
+
     int search(Word& sentence,void(*call_back)(int,int),int post=0){
         int empty=1;
         for(int offset=0;offset<(int)sentence.size();offset++){
@@ -104,6 +143,10 @@ public:
         }
         return !empty;
     }
+    /*
+     * 如果没有匹配到，返回-1
+     * 如果匹配成果，返回下标（base[下标]为value）
+     * */
     int match(const Word& word,int post=0){
         register int ind=0;
         register int base=0;
@@ -117,6 +160,12 @@ public:
             return ind;
         }
         return -1;
+    }
+    int update(const Word& word,int value,int post=0){
+        int base=match(word,post);
+        if(base>=0){
+            dat[base].base=value;
+        }
     }
 
     /*return -base or number of matched characters*/
@@ -138,8 +187,21 @@ public:
         Word key;
         int value;
     };
+    static bool compare_words (const DATMaker::KeyValue& first, const DATMaker::KeyValue& second)
+    {
+        const daidai::Word& first_word=first.key;
+        const daidai::Word& second_word=second.key;
+        size_t min_size=(first_word.size()<second_word.size())?first_word.size():second_word.size();
+        for(int i=0;i<min_size;i++){
+            if(first_word[i]>second_word[i])return false;
+            if(first_word[i]<second_word[i])return true;
+        }
+        
+      return (first_word.size()<second_word.size());
+    }
+ 
     
-
+public:
     int head;
     int tail;
     DATMaker(){
@@ -194,31 +256,6 @@ public:
     int alloc(std::vector<int>& offsets){
         size_t size=offsets.size();
         
-        ////忽略已经存在的不太连续的空位
-        //int slots=4;
-        //int new_head=-head;
-        //while(new_head!=dat_size){
-            //int p=new_head;
-            ////std::cout<<head<<" "<<new_head<<"\n";
-            //while(p!=dat_size){
-                //if(dat[p].check>=0)printf("wrong!!!\n");
-                //if((-dat[p].check)!=(p+1))break;
-                //if((p-(new_head))>=slots)break;
-                //p=-dat[p].check;
-            //}
-            ////std::cout<<p<<"\n";
-            //if(p==dat_size)break;
-            //if((p-(new_head))<slots){
-                //int tmp=-dat[p].check;
-                //for(int i=new_head;i<=p;i++)
-                    //use(i);
-                //new_head=tmp;
-                //continue;
-            //}else{
-                //break;
-            //}
-        //}
-        ////std::cout<<head<<" "<<new_head<<"\n";
         
         register size_t base=-head;
         while(1){
@@ -279,6 +316,8 @@ public:
         return base;
     }
     void make_dat(std::vector<KeyValue>& lexicon,int no_prefix=0){
+        std::sort(lexicon.begin(),lexicon.end(),&compare_words);
+
         int size=(int)lexicon.size();
         std::vector<int> children;
         Word prefix;
@@ -288,6 +327,8 @@ public:
         dat[0].base=base;
         for(int i=0;i<(int)lexicon.size();i++){
             Word& word=lexicon[i].key;
+            //std::cout<<word<<"\n";
+            //std::cout.flush();
             int off=get_info(word);
             if(off<=0)off=(int)word.size();
             for(int offset=off;offset<=(int)word.size();offset++){
