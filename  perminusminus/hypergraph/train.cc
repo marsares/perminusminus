@@ -21,12 +21,16 @@ int main (int argc,char **argv) {
     int c;
     int option_index = 0;
     DAT* sogouw=NULL;
-    while ( (c = getopt_long(argc, argv, "W:i:h",long_options,&option_index)) != -1) {
+    DAT* sogout=NULL;
+    while ( (c = getopt_long(argc, argv, "T:W:i:h",long_options,&option_index)) != -1) {
         switch (c) {
             case 0:
                 break;
             case 'W':
                 sogouw=new DAT(optarg);
+                break;
+            case 'T':
+                sogout=new DAT(optarg);
                 break;
             case 'i' : 
                 iteration=atoi(optarg);
@@ -53,11 +57,16 @@ int main (int argc,char **argv) {
     if(sogouw){
         lfl.node_features.push_back(new DictNodeFeature(sogouw));
     }
+    if(sogout){
+        lfl.node_features.push_back(new SogouTFeature(sogout));
+    }
+
     Learner<int,LatticeEdge> learner;
     //printf("what\n");
     learner.learn(*io,iteration,lfl);
 
     delete io;
     delete sogouw;
+    delete sogout;
 }
 

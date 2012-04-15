@@ -69,11 +69,17 @@ class LearningGraph: public Graph{
 class LatticeIO:public DataIO<int,LatticeEdge>{
     const char* filename;
     std::fstream* fstream;
+    int use_std;
     char mode;
 public:
     LatticeIO(const char* filename,const char mode){
+        use_std=false;
         this->filename=filename;
         this->mode=mode;
+        if(filename[0]=='-'){
+            std::cout<<"use stdio\n";
+            use_std=true;
+        }
         if(mode=='r'){
             fstream=new std::fstream(filename,std::fstream::in);
         }else{
@@ -94,6 +100,16 @@ public:
      * load lines, and make the graph
      * */ 
     int load(Graph& graph){
+        if(use_std){
+            Lattice lattice;
+            if(mode=='r'){
+                std::cin>>lattice;
+                //std::cout<<"hehe";
+                if((lattice.size())==0)return 0;
+                lattice_to_graph(lattice,graph);
+            }
+            return 1;
+        }
         //std::cout<<"what\n";
         if(mode=='w')return 0;
         std::string str;
@@ -107,20 +123,27 @@ public:
     int save(Graph& graph){
         if(mode=='r')return 0;
         int start=1;
+        
+        std::ostream* os;
+        if(use_std){
+            os=&(std::cout);
+        }else{
+            os=fstream;
+        }
         for(int i=0;i<graph.nodes.size();i++){
             if(graph.nodes[i].result==1){//如果是结果，才输出
             //if(graph.nodes[i].data.margin==0){
                 if(start){
                     start=0;
                 }else{
-                    (*fstream)<<" ";
+                    (*os)<<" ";
                 }
-                (*fstream)<<graph.nodes[i].data.word<<"_"<<graph.nodes[i].data.tag;
-                //(*fstream)<<"/"<<graph.nodes[i].data.margin;
+                (*os)<<graph.nodes[i].data.word<<"_"<<graph.nodes[i].data.tag;
+                //(*os)<<"/"<<graph.nodes[i].data.margin;
             }
         }
-        (*fstream)<<"\n";
-        fstream->flush();
+        (*os)<<"\n";
+        os->flush();
     };
     ~LatticeIO(){
         fstream->flush();
@@ -392,7 +415,6 @@ public:
 
             for(int fid=0;fid<node_features.size();fid++){
                 //continue;
-                //std::cout<<fid<<"\n";
                 keys.clear();
                 node_features[fid]->add_features(node,keys);
                 for(int j=0;j<keys.size();j++){
@@ -403,11 +425,13 @@ public:
                     //put_raw(key);putchar('\n');
                     (this->*call_back)(key,node.weight);
                 }
+                //std::cout<<fid<<"\n";
                 /*key.clear();
                 key+='u';
                 key.push_back(fid+33);
                 if(node_features[fid]->generate(node,key)==0)
-                    (this->*call_back)(key,node.weight);*/
+                    (this->*call_back)(key,node.weight);
+                    */
             }
         }
         for(int i=0;i<graph.edges.size();i++){
@@ -442,12 +466,13 @@ public:
                     key+=keys[j];
                     (this->*call_back)(key,edge.weight);
                 }
-                /*key.clear();
+                /*
+                key.clear();
                 key+='b';
                 key.push_back(fid+33);
                 if(edge_features[fid]->generate(left_node,right_node,key)==0)
-                    (this->*call_back)(key,edge.weight);
-                    */
+                    (this->*call_back)(key,edge.weight);*/
+                    
             }
         }
     };

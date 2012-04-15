@@ -67,16 +67,17 @@ int main (int argc,char **argv) {
     daidai::SegmentedSentence segged;
     while(1){
         rtn=daidai::get_raw(input,max_length,length);
+        //std::cout<<"i am ok\n";
         if(length){
             tagging_decoder->segment(input,length,tags);
-            if(tagging_decoder->threshold==0){
+            if(tagging_decoder->threshold==0){//只输出分词结果
                 tagging_decoder->output_sentence();
-            }else{
-                if(sl_decoder_show_sentence){
-
+            }else{//输出字图
+                if(sl_decoder_show_sentence){//输出原句子
                     tagging_decoder->output_raw_sentence();
                     printf(" ");
                 }
+
                 tagging_decoder->cal_betas();
                 if(!std_lattice){
                     tagging_decoder->output_allow_tagging();
@@ -88,6 +89,7 @@ int main (int argc,char **argv) {
         }
         if(rtn==-1)break;
         putchar(rtn);
+        std::cout.flush();
     }
     delete[]input;
     delete[]tags;

@@ -17,12 +17,16 @@ int main (int argc,char **argv) {
     int c;
     int option_index = 0;
     DAT* sogouw=NULL;
-    while ( (c = getopt_long(argc, argv, "W:h",long_options,&option_index)) != -1) {
+    DAT* sogout=NULL;
+    while ( (c = getopt_long(argc, argv, "T:W:h",long_options,&option_index)) != -1) {
         switch (c) {
             case 0:
                 break;
             case 'W':
                 sogouw=new DAT(optarg);
+                break;
+            case 'T':
+                sogout=new DAT(optarg);
                 break;
             case 'h' :
             case '?' : 
@@ -40,6 +44,9 @@ int main (int argc,char **argv) {
     if(sogouw){
         lf.node_features.push_back(new DictNodeFeature(sogouw));
     }
+    if(sogout){
+        lf.node_features.push_back(new SogouTFeature(sogout));
+    }
     lf.filename=argv[optind];
     lf.load();
     DataIO<int,LatticeEdge>* output=new LatticeIO(argv[optind+2],'w');
@@ -51,5 +58,7 @@ int main (int argc,char **argv) {
     decoder.decode(*io,*output);
     delete output;
 
+    delete sogouw;
+    delete sogout;
 }
 

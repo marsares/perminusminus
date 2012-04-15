@@ -370,7 +370,6 @@ void TaggingDecoder::set_label_trans(){
                 if(i_is_end&&j_is_begin){
                     pre_labels[j].push_back(i);
                     post_labels[i].push_back(j);
-                    //printf("ok\n");
                 }
             }
         }
@@ -378,17 +377,24 @@ void TaggingDecoder::set_label_trans(){
     for(int i=0;i<l_size;i++){
         label_trans_pre[i]=new int[(int)pre_labels[i].size()+1];
         int k=0;
-        //printf("i=%d>>\n",i);
         for(std::list<int>::iterator plist = pre_labels[i].begin();
                 plist != pre_labels[i].end(); plist++){
             label_trans_pre[i][k]=*plist;
-            //printf("%d ",*plist);
             k++;
         };
-        //printf("\n");
         label_trans_pre[i][k]=-1;
     }
-    
+    label_trans_post=new int*[l_size]; 
+    for(int i=0;i<l_size;i++){
+        label_trans_post[i]=new int[(int)post_labels[i].size()+1];
+        int k=0;
+        for(std::list<int>::iterator plist=post_labels[i].begin();
+                plist!=post_labels[i].end();++plist){
+            label_trans_post[i][k]=*plist;
+            k++;
+        };
+        label_trans_post[i][k]=-1;
+    }
 };
 
 void TaggingDecoder::load_label_trans(char*filename){

@@ -20,10 +20,18 @@ int main (int argc,char **argv) {
     cws_decoder->threshold=15000;
     
     int c;
-    while ( (c = getopt(argc, argv, "t:h")) != -1) {
+    int std_lattice=false;
+    while ( (c = getopt(argc, argv, "t:hlT:")) != -1) {
         switch (c) {
             case 't' : //specify the threshold for the CWS model
                 cws_decoder->threshold = atoi(optarg)*1000;
+                break;
+            case 'l':
+                std_lattice=true;
+
+                break;
+            case 'T':
+                tag_decoder->threshold = atoi(optarg)*1000;
                 break;
             case 'h' :
             case '?' : 
@@ -107,6 +115,7 @@ int main (int argc,char **argv) {
     
     
     
+    Lattice lattice;
     //read_stream();
     ///开始运行
     int*input=new int[1000];
@@ -131,7 +140,14 @@ int main (int argc,char **argv) {
                 tag_decoder->allowed_label_lists[i]=allowed_tags[tag_code];
             }
             tag_decoder->segment(input,length,tags);
-            tag_decoder->output_sentence();
+            if(tag_decoder->threshold==0){//只输出分词结果
+                tag_decoder->output_sentence();
+            }else{//输出字图
+                tag_decoder->cal_betas();
+                tag_decoder->generate_lattice(lattice); 
+                std::cout<<lattice;
+            }
+            //tag_decoder->output_sentence();
         }
         if(rtn==-1)break;
         putchar(rtn);
